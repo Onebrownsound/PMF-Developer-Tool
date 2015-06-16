@@ -36,12 +36,20 @@ def PromptUserChoice():
     # is case sensitive and be aware for underscores
     return raw_input()
 
+def WriteVagrantConfig():
+    print ("...Writing Vagrant Configurations To File...")
+    # The next line will open the Vagrant configuration as a file object known as f
+    try:
+        with open("Vagrantfile", "w+") as f:
+            f.write(BASE_VAGRANT_CONFIG.safe_substitute(operating_system=OPERATING_SYSTEMS[mUserOsChoice]["name"]))
+    except IOError:
+        print("Apparently Vagrantfile does not exist.")
+    print("Vagrantfile Succesfully Initialized")
+
+
 # Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEMS
 mUserOsChoice = None
 while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
     mUserOsChoice = PromptUserChoice()
+WriteVagrantConfig()
 
-
-# The next line will open the Vagrant configuration as a file object known as f
-with open("Vagrantfile", "w+") as f:
-    f.write(BASE_VAGRANT_CONFIG.safe_substitute(operating_system=OPERATING_SYSTEMS[mUserOsChoice]["name"]))
