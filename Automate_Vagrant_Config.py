@@ -40,7 +40,7 @@ def PromptUserChoice():
     # is case sensitive and be aware for underscores
     return raw_input()
 
-def WriteVagrantConfig():
+def WriteVagrantConfig(mUserOsChoice):
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
     try:
@@ -55,7 +55,7 @@ def main():
     mUserOsChoice = None
     while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
         mUserOsChoice = PromptUserChoice()
-    WriteVagrantConfig()
+    WriteVagrantConfig(mUserOsChoice)
 
 
 if __name__=="__main__":
