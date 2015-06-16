@@ -14,6 +14,10 @@ OPERATING_SYSTEMS = {
     "Lucid_32": {"name": "lucid32",
                  "description": "TODO",
                  },
+    "Windows_Xp": {"name": "Windows_Xp",
+                 "description": "Windows Xp 32 bit edition",
+                 },
+
 }
 
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
@@ -46,10 +50,13 @@ def WriteVagrantConfig():
         print("Apparently Vagrantfile does not exist.")
     print("Vagrantfile Succesfully Initialized")
 
+def main():
+    # Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEMS
+    mUserOsChoice = None
+    while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
+        mUserOsChoice = PromptUserChoice()
+    WriteVagrantConfig()
 
-# Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEMS
-mUserOsChoice = None
-while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
-    mUserOsChoice = PromptUserChoice()
-WriteVagrantConfig()
 
+if __name__=="__main__":
+    main()
