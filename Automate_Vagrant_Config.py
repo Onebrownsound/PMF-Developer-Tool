@@ -33,10 +33,20 @@ BASE_VAGRANT_CONFIG = """Vagrant.configure("2") do |config|
 
 end"""
 
-print "Greetings these are the follow choices for operatin systems ",OPERATING_SYSTEMS.keys()," Please select one (case matters)"
-#mUserOsChoice is a string which represents the users choice for operating system
-#is case sensitive and be aware for underscores
-mUserOsChoice=str(input())
+#function responsible for prompting user for OS Choice
+def PromptUserChoice():
+    print "Greetings these are the follow choices for operatin systems ",OPERATING_SYSTEMS.keys()," Please select one (case matters)"
+    #mUserOsChoice is a string which represents the users choice for operating system
+    #is case sensitive and be aware for underscores
+    return raw_input()
+
+
+#Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEMS
+mUserOsChoice=None
+while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
+    mUserOsChoice=PromptUserChoice()
+
+
 
 
 # The next line will open the Vagrant configuration as a file object known as f
