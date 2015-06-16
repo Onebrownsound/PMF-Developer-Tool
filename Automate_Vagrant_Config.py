@@ -1,27 +1,19 @@
 from string import Template
+
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
 OPERATING_SYSTEMS = {
 
     "Centos_6.5": {"name": "chef/centos-6.5",
                    "description": "A standard CentOS 6.5 x64 base install",
-                   "setting1": "value1",
-                   "setting2": "value2",
-                   "setting3": "value3",
-                   "setting4": "value4"},
+                   },
 
     "Ubuntu_12.04_LTS_64bit_Server": {"name": "hashicorp/precise64",
                                       "description": "A standard CentOS 6.5 x64 base install",
-                                      "setting1": "value1",
-                                      "setting2": "value2",
-                                      "setting3": "value3",
-                                      "setting4": "value4"},
+                                      },
 
     "Lucid_32": {"name": "lucid32",
                  "description": "TODO",
-                 "setting1": "value1",
-                 "setting2": "value2",
-                 "setting3": "value3",
-                 "setting4": "value4"},
+                 },
 }
 
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
@@ -48,12 +40,6 @@ def PromptUserChoice():
 mUserOsChoice = None
 while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
     mUserOsChoice = PromptUserChoice()
-
-print(BASE_VAGRANT_CONFIG.safe_substitute(operating_system=OPERATING_SYSTEMS[mUserOsChoice]["name"]))
-
-
-
-
 
 
 # The next line will open the Vagrant configuration as a file object known as f
