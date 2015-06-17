@@ -2,21 +2,13 @@ from string import Template
 
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
 OPERATING_SYSTEMS = {
-
-    "Centos_6.5": {"name": "chef/centos-6.5",
-                   "description": "A standard CentOS 6.5 x64 base install",
-                   },
-
     "Ubuntu_12.04_LTS_64bit_Server": {"name": "hashicorp/precise64",
                                       "description": "A standard CentOS 6.5 x64 base install",
                                       },
 
     "Lucid_32": {"name": "lucid32",
                  "description": "TODO",
-                 },
-    "Windows_Xp": {"name": "Windows_Xp",
-                 "description": "Windows Xp 32 bit edition",
-                 },
+                 }
 
 }
 
@@ -35,10 +27,17 @@ end""")
 
 # function responsible for prompting user for OS Choice
 def PromptUserChoice():
-    print "Greetings these are the follow choices for operatin systems ", OPERATING_SYSTEMS.keys(), " Please select one (case matters)"
+    choice_list={}
+    for i,j in enumerate(OPERATING_SYSTEMS.keys(),start=1):
+        choice_list[i]=j
+    print "\nGreetings these are the follow choices for operating systems Please select one (case matters):\n"
+    print(choice_list)
+
+    user_input=raw_input()
+
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
-    return raw_input()
+    return choice_list[user_input]
 
 def WriteVagrantConfig(mUserOsChoice):
     print ("...Writing Vagrant Configurations To File...")
