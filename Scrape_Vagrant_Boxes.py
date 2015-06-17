@@ -14,8 +14,6 @@ class VagrantBox():
 
     def __repr__(self):
         return str(self.short_name)
-
-
 def main():
     # The following four lines are used to
     # Retrieve the raw HTML from the target_url
@@ -44,10 +42,7 @@ def main():
     # Finally now that we have culled the vagrant_box_container iterate over all housed objects and display their respective
     # short name and url
     for box in vagrant_box_container:
-        print(box,box.url)
-
+        print(box, box.url)
 
 if __name__ == "__main__":
     main()
-
-# EOF
