@@ -2,14 +2,16 @@ from string import Template
 
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
 OPERATING_SYSTEMS = {
-    "Ubuntu_12.04_LTS_64bit_Server": {"name": "hashicorp/precise64",
-                                      "description": "A standard CentOS 6.5 x64 base install",
+    "Ubuntu 12.04 LTS 64bit Server": {"name": "hashicorp/precise64",
+                                      "description": " A standard Ubuntu 12.04 LTS 64-bit box.",
                                       },
 
-    "Lucid_32": {"name": "lucid32",
+    "Lucid 32": {"name": "lucid32",
                  "description": "TODO",
-                 }
-
+                 },
+    "Ubuntu Server 14.04 LTS": {"name": "ubuntu/trusty64",
+                                "description": "Official Ubuntu Server 14.04 LTS (Trusty Tahr) builds",
+                                }
 }
 
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
@@ -21,23 +23,48 @@ BASE_VAGRANT_CONFIG = Template("""Vagrant.configure("2") do |config|
   config.vm.provision :shell, path: "bootstrap.sh"
   config.vm.provider "virtualbox" do |v|
     v.gui = true
+    v.memory=1024
   end
 
 end""")
 
-# function responsible for prompting user for OS Choice
-def PromptUserChoice():
-    choice_list={}
-    for i,j in enumerate(OPERATING_SYSTEMS.keys(),start=1):
-        choice_list[i]=j
-    print "\nGreetings these are the follow choices for operating systems Please select one (case matters):\n"
-    print(choice_list)
+BASE_BOOTSTRAP_CONFIG = Template("""#!/usr/bin/env bash
 
-    user_input=raw_input()
+sudo apt-get update
+for i in python3; do
+  sudo apt-get install $i -y
+${rdb}
+done""")
+
+DATABASE={
+1: """sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password'
+sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password'
+sudo apt-get -y install mysql-client mysql-server""",
+
+2:"sudo apt-get -y install postgresql"}
+
+
+# function responsible for prompting user for OS Choice
+def PromptUserOSChoice():
+    choice_list = {}
+    for i, j in enumerate(OPERATING_SYSTEMS.keys(), start=1):
+        choice_list[i] = j
+
+    print "\nGreetings these are the follow choices for operating systems Please select one (case matters):\n"
+    for key, value in choice_list.items():
+        print(key, value)
+
+    user_input = None
+    while (user_input is None or user_input not in choice_list.keys()):
+        user_input = int(raw_input())
+        if (user_input not in choice_list.keys()):
+            print("Sorry that is not an acceptable input please try again or exit the program.")
+
 
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
     return choice_list[user_input]
+
 
 def WriteVagrantConfig(mUserOsChoice):
     print ("...Writing Vagrant Configurations To File...")
@@ -49,13 +76,26 @@ def WriteVagrantConfig(mUserOsChoice):
         print("Apparently Vagrantfile does not exist.")
     print("Vagrantfile Succesfully Initialized")
 
+def PromptUserDBChoice():
+    print("Please select from the following options for databases. \n1. MYSQL\n2. POSTGRESQL\n")
+    user_input=int(raw_input())
+    while (user_input not in range(1,4)):
+        print("Sorry that is not an acceptable input please try again or exit the program.")
+        user_input=int(raw_input())
+    return user_input
+
+def WriteBootstrapConfig(data_base_string):
+    with open("bootstrap.sh","w+") as f:
+        f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
+
+
+
 def main():
-    # Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEMS
-    mUserOsChoice = None
-    while (mUserOsChoice not in OPERATING_SYSTEMS.keys()):
-        mUserOsChoice = PromptUserChoice()
+    # Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
+    mUserOsChoice = PromptUserOSChoice()
     WriteVagrantConfig(mUserOsChoice)
+    mUserDBChoice =PromptUserDBChoice()
+    WriteBootstrapConfig(DATABASE[mUserDBChoice])
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
