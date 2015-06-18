@@ -168,10 +168,10 @@ update-rc.d derby defaults
 echo "======================================================================="
 echo "============================ Installing PMF ==========================="
 echo "======================================================================="
-#Get the latest PMF Release (NOTE the release is hard coded for now) and copy into local install folder
-newestClient=`ls /bigport/rels_development/801/pmf | tail -1`
-newestClientGen=`ls /bigport/rels_development/801/pmf/$newestClient | tail -1`
-cp /bigport/rels_development/801/pmf/$newestClient/$newestClientGen/unix_single_file_pkg/install.bin /installs/pmf-install.bin
+#Get the latest PMF Release and copy into local install folder
+newestClient=`ls /bigport/rels_development/$pmfRel/pmf | tail -1`
+newestClientGen=`ls /bigport/rels_development/$pmfRel/pmf/$newestClient | tail -1`
+cp /bigport/rels_development/$pmfRel/pmf/$newestClient/$newestClientGen/unix_single_file_pkg/install.bin /installs/pmf-install.bin
 cd /installs
 chmod 777 pmf-install.bin
 # Run the silent install

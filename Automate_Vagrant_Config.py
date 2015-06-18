@@ -19,13 +19,14 @@ OPERATING_SYSTEMS = {
 # In order to extract strings from a template object use the TEMPLATEOBJECT.safe_substitute() method,
 # Which will return the template object as a string with the appropriate substitutions
 BASE_VAGRANT_CONFIG = Template("""Vagrant.configure("2") do |config|
-  config.vm.box ="${operating_system}"
+  config.vm.box = "${operating_system}"
   config.vm.provision :shell, path: "bootstrap.sh"
-  config.vm.provider "virtualbox" do |v|
-    v.gui = true
-    v.memory=1024
-  end
-
+  config.vm.network "public_network", use_dhcp_assigned_default_route:true
+   config.vm.provider :virtualbox do |vb|
+     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+     vb.customize ["modifyvm", :id, "--memory", "2048"]
+   end
 end""")
 
 BASE_BOOTSTRAP_CONFIG = Template("""#!/usr/bin/env bash
@@ -94,8 +95,8 @@ def main():
     # Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
     mUserOsChoice = PromptUserOSChoice()
     WriteVagrantConfig(mUserOsChoice)
-    mUserDBChoice =PromptUserDBChoice()
-    WriteBootstrapConfig(DATABASE[mUserDBChoice])
+    #0mUserDBChoice =PromptUserDBChoice()
+    #WriteBootstrapConfig(DATABASE[mUserDBChoice])
 
 if __name__ == "__main__":
     main()
