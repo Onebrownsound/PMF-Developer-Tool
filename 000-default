@@ -1,3 +1,0 @@
-<VirtualHost *:80>
-JkMount /* worker1
-</VirtualHost>
