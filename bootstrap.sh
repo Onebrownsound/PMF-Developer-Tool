@@ -3,6 +3,8 @@
 #Setup the start time
 STARTTIME=$(date +%s)
 
+
+
 #Preset the MySQL root password for use later
 sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password password root'
 sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_again password root'
@@ -10,6 +12,8 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 #Update the packages and install the required ones
 apt-get update
 apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java
+#install postgresql
+sudo apt-get -y install postgresql
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\n<Connector port="8080"/' /etc/tomcat7/server.xml

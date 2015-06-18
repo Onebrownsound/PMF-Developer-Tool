@@ -95,7 +95,7 @@ def main():
     # Set mUserOsChoice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
     mUserOsChoice = PromptUserOSChoice()
     WriteVagrantConfig(mUserOsChoice)
-    #0mUserDBChoice =PromptUserDBChoice()
+    #mUserDBChoice =PromptUserDBChoice()
     #WriteBootstrapConfig(DATABASE[mUserDBChoice])
 
 if __name__ == "__main__":
