@@ -5,15 +5,15 @@ import subprocess
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
 OPERATING_SYSTEMS = {
     "hashicorp/precise64": {"name": "hashicorp/precise64",
-                                      "description": " A standard Ubuntu 12.04 LTS 64-bit box.",
-                                      },
+                            "description": " A standard Ubuntu 12.04 LTS 64-bit box.",
+                            },
 
     "ubuntu/trusty64": {"name": "ubuntu/trusty64",
-                                "description": "Official Ubuntu Server 14.04 LTS (Trusty Tahr) builds",
-                                },
-     "chef/debian-7.4": {"name": "chef/debian-7.4",
-                                "description": "A standard Debian 7.4 x64 base install",
-                                }
+                        "description": "Official Ubuntu Server 14.04 LTS (Trusty Tahr) builds",
+                        },
+    "chef/debian-7.4": {"name": "chef/debian-7.4",
+                        "description": "A standard Debian 7.4 x64 base install",
+                        }
 }
 
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
@@ -67,12 +67,12 @@ def write_vagrant_config(mUserOsChoice):
 
 
 def write_bootstrap_config(data_base_string):
-    with open("bootstrap.sh","w+") as f:
+    with open("bootstrap.sh", "w+") as f:
         f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
 
 
-def query_and_install_boxes(m_system_vagrant_object,m_target_boxes):
-    m_vagrant_box_list=[]
+def query_and_install_boxes(m_system_vagrant_object, m_target_boxes):
+    m_vagrant_box_list = []
     for box in m_system_vagrant_object.box_list():
         m_vagrant_box_list.append(box.name)
 
@@ -84,33 +84,32 @@ def query_and_install_boxes(m_system_vagrant_object,m_target_boxes):
         if (box not in m_vagrant_box_list):
             print(box, "is not found! Attempting to connect to server and download")
             try:
-                subprocess.call(["vagrant","box","add",box,"--provider","virtualbox"])
+                subprocess.call(["vagrant", "box", "add", box, "--provider", "virtualbox"])
             except:
                 print "Subprocess error please see logs."
                 return
     print "All targeted boxes installed!"
 
 
-
 def main():
-    #m_target_boxes is a very important list of desired boxes for a particular system
-    #the name entered into them must match the name hosted by Vagrant at
+    # m_target_boxes is a very important list of desired boxes for a particular system
+    # the name entered into them must match the name hosted by Vagrant at
     # https://atlas.hashicorp.com/boxes/search
-    #if you append to target boxes be sure to manually add an entry into the global dictionary OPERATING_SYSTEMS
+    # if you append to target boxes be sure to manually add an entry into the global dictionary OPERATING_SYSTEMS
 
-    m_target_boxes=["hashicorp/precise64","ubuntu/trusty64","chef/debian-7.4"]
+    m_target_boxes = ["hashicorp/precise64", "ubuntu/trusty64", "chef/debian-7.4"]
 
-    #Create a Vagrant object for the system in order to retrieve status information and such
-    m_system_vagrant_object=vagrant.Vagrant()
-    #Query system to see if any boxes are installed
-    query_and_install_boxes(m_system_vagrant_object,m_target_boxes)
+    # Create a Vagrant object for the system in order to retrieve status information and such
+    m_system_vagrant_object = vagrant.Vagrant()
+    # Query system to see if any boxes are installed
+    query_and_install_boxes(m_system_vagrant_object, m_target_boxes)
 
 
     # Set m_user_os_choice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
     m_user_os_choice = prompt_user_os_choice()
     write_vagrant_config(m_user_os_choice)
 
-    #Create a vagrant box object to fetch the systems box list
+    # Create a vagrant box object to fetch the systems box list
 
 
 if __name__ == "__main__":
