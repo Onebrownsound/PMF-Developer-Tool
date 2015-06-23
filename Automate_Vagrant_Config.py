@@ -13,9 +13,12 @@ OPERATING_SYSTEMS = {
                         },
     "chef/debian-7.4": {"name": "chef/debian-7.4",
                         "description": "A standard Debian 7.4 x64 base install",
-                        }
-}
+                        },
+    "chef/ubuntu-14.04": {"name": "chef/ubuntu-14.04",
+                          "description": "A standard chef/ubuntu-14.04 x64 base install",
+                          }
 
+}
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
 # Template objects may not be treated as regular strings
 # In order to extract strings from a template object use the TEMPLATEOBJECT.safe_substitute() method,
@@ -54,7 +57,8 @@ def prompt_user_os_choice():
     # is case sensitive and be aware for underscores
     return m_choice_list[m_user_input]
 
-#Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
+
+# Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
 def write_vagrant_config(mUserOsChoice):
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -66,7 +70,7 @@ def write_vagrant_config(mUserOsChoice):
     print("Vagrantfile Succesfully Initialized")
 
 
-#Function currently does not get called, but could be useful in the future.
+# Function currently does not get called, but could be useful in the future.
 def write_bootstrap_config(data_base_string):
     with open("bootstrap.sh", "w+") as f:
         f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
@@ -75,17 +79,17 @@ def write_bootstrap_config(data_base_string):
 def query_and_install_boxes(m_system_vagrant_object, m_desired_boxes):
     m_currently_installed_boxes = []
 
-    #Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
+    # Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
     for box in m_system_vagrant_object.box_list():
         m_currently_installed_boxes.append(box.name)
 
     print " System Box Status :"
 
-    #Will trigger only if no boxes are installed
+    # Will trigger only if no boxes are installed
     if not m_currently_installed_boxes:
         print("Im sorry no boxes are currently installed. We can fix that! \n")
 
-    #Iterate through desired boxes and check if they are in installed boxes. If they are desired and not installed go download them from vagrants server.
+    # Iterate through desired boxes and check if they are in installed boxes. If they are desired and not installed go download them from vagrants server.
     for box in m_desired_boxes:
         if (box not in m_currently_installed_boxes):
             print(box, "is not found! Attempting to connect to server and download")
@@ -103,7 +107,7 @@ def main():
     # https://atlas.hashicorp.com/boxes/search
     # if you append to target boxes be sure to manually add an entry into the global dictionary OPERATING_SYSTEMS
 
-    m_target_boxes = ["hashicorp/precise64", "ubuntu/trusty64", "chef/debian-7.4"]
+    m_target_boxes = ["hashicorp/precise64", "ubuntu/trusty64", "chef/debian-7.4", "chef/ubuntu-14.04"]
 
     # Create a Vagrant object for the system in order to retrieve status information and such
     m_system_vagrant_object = vagrant.Vagrant()
@@ -114,8 +118,6 @@ def main():
     # Set m_user_os_choice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
     m_user_os_choice = prompt_user_os_choice()
     write_vagrant_config(m_user_os_choice)
-
-
 
 
 if __name__ == "__main__":
