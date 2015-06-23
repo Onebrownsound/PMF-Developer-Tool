@@ -54,7 +54,7 @@ def prompt_user_os_choice():
     # is case sensitive and be aware for underscores
     return m_choice_list[m_user_input]
 
-
+#Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
 def write_vagrant_config(mUserOsChoice):
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -66,22 +66,28 @@ def write_vagrant_config(mUserOsChoice):
     print("Vagrantfile Succesfully Initialized")
 
 
+#Function currently does not get called, but could be useful in the future.
 def write_bootstrap_config(data_base_string):
     with open("bootstrap.sh", "w+") as f:
         f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
 
 
-def query_and_install_boxes(m_system_vagrant_object, m_target_boxes):
-    m_vagrant_box_list = []
+def query_and_install_boxes(m_system_vagrant_object, m_desired_boxes):
+    m_currently_installed_boxes = []
+
+    #Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
     for box in m_system_vagrant_object.box_list():
-        m_vagrant_box_list.append(box.name)
+        m_currently_installed_boxes.append(box.name)
 
     print " System Box Status :"
-    if not m_vagrant_box_list:
+
+    #Will trigger only if no boxes are installed
+    if not m_currently_installed_boxes:
         print("Im sorry no boxes are currently installed. We can fix that! \n")
 
-    for box in m_target_boxes:
-        if (box not in m_vagrant_box_list):
+    #Iterate through desired boxes and check if they are in installed boxes. If they are desired and not installed go download them from vagrants server.
+    for box in m_desired_boxes:
+        if (box not in m_currently_installed_boxes):
             print(box, "is not found! Attempting to connect to server and download")
             try:
                 subprocess.call(["vagrant", "box", "add", box, "--provider", "virtualbox"])
@@ -109,7 +115,7 @@ def main():
     m_user_os_choice = prompt_user_os_choice()
     write_vagrant_config(m_user_os_choice)
 
-    # Create a vagrant box object to fetch the systems box list
+
 
 
 if __name__ == "__main__":
