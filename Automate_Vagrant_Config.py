@@ -100,11 +100,12 @@ def fetch_system_boxes():
     m_query_system = subprocess.check_output(["vagrant", "box", "list"]).split("\n")
     for item in m_query_system:
         try:
-            box_name=item.rstrip().split()
+            box_name = item.rstrip().split()
             m_box_results.append(box_name[0])
         except:
             pass
     return m_box_results
+
 
 def main():
     # Create a Vagrant object for the system in order to retrieve status information and such
