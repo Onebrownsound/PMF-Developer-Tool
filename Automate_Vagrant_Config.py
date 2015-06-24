@@ -38,7 +38,7 @@ end""")
 # function responsible for prompting user for OS Choice
 def prompt_user_os_choice():
     m_choice_list = {}
-    for i, j in enumerate(OPERATING_SYSTEMS.keys(), start=1):
+    for i, j in enumerate(OPERATING_SYSTEMS, start=1):
         m_choice_list[i] = j
 
     print "\nPlease select one (case matters):\n"
@@ -76,7 +76,7 @@ def write_bootstrap_config(data_base_string):
         f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
 
 
-def query_and_install_boxes(m_system_vagrant_object, m_desired_boxes):
+def query_and_install_boxes(m_system_vagrant_object):
     m_currently_installed_boxes = []
 
     # Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
@@ -90,7 +90,7 @@ def query_and_install_boxes(m_system_vagrant_object, m_desired_boxes):
         print("Im sorry no boxes are currently installed. We can fix that! \n")
 
     # Iterate through desired boxes and check if they are in installed boxes. If they are desired and not installed go download them from vagrants server.
-    for box in m_desired_boxes:
+    for box in OPERATING_SYSTEMS:
         if (box not in m_currently_installed_boxes):
             print(box, "is not found! Attempting to connect to server and download")
             try:
@@ -102,17 +102,10 @@ def query_and_install_boxes(m_system_vagrant_object, m_desired_boxes):
 
 
 def main():
-    # m_target_boxes is a very important list of desired boxes for a particular system
-    # the name entered into them must match the name hosted by Vagrant at
-    # https://atlas.hashicorp.com/boxes/search
-    # if you append to target boxes be sure to manually add an entry into the global dictionary OPERATING_SYSTEMS
-
-    m_target_boxes = ["hashicorp/precise64", "ubuntu/trusty64", "chef/debian-7.4", "chef/ubuntu-14.04"]
-
     # Create a Vagrant object for the system in order to retrieve status information and such
     m_system_vagrant_object = vagrant.Vagrant()
     # Query system to see if any boxes are installed
-    query_and_install_boxes(m_system_vagrant_object, m_target_boxes)
+    query_and_install_boxes(m_system_vagrant_object)
 
 
     # Set m_user_os_choice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
