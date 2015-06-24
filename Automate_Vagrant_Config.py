@@ -1,5 +1,4 @@
 from string import Template
-import vagrant
 import subprocess
 
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
@@ -76,13 +75,8 @@ def write_bootstrap_config(data_base_string):
         f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
 
 
-def query_and_install_boxes(m_system_vagrant_object):
-    m_currently_installed_boxes = []
-
+def query_and_install_boxes(m_currently_installed_boxes):
     # Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
-    for box in m_system_vagrant_object.box_list():
-        m_currently_installed_boxes.append(box.name)
-
     print " System Box Status :"
 
     # Will trigger only if no boxes are installed
@@ -101,14 +95,24 @@ def query_and_install_boxes(m_system_vagrant_object):
     print "All targeted boxes installed!"
 
 
+def fetch_system_boxes():
+    m_box_results = []
+    m_query_system = subprocess.check_output(["vagrant", "box", "list"]).split("\n")
+    for item in m_query_system:
+        try:
+            box_name=item.rstrip().split()
+            m_box_results.append(box_name[0])
+        except:
+            pass
+    return m_box_results
+
 def main():
     # Create a Vagrant object for the system in order to retrieve status information and such
-    m_system_vagrant_object = vagrant.Vagrant()
     # Query system to see if any boxes are installed
-    query_and_install_boxes(m_system_vagrant_object)
+    m_installed_vagrant_boxes = fetch_system_boxes()
 
+    query_and_install_boxes(m_installed_vagrant_boxes)
 
-    # Set m_user_os_choice to null, and repeat prompt until user response matches a key in OPERATING_SYSTEM
     m_user_os_choice = prompt_user_os_choice()
     write_vagrant_config(m_user_os_choice)
 
