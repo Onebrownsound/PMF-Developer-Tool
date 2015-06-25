@@ -69,12 +69,6 @@ def write_vagrant_config(mUserOsChoice):
     print("Vagrantfile Succesfully Initialized")
 
 
-# Function currently does not get called, but could be useful in the future.
-def write_bootstrap_config(data_base_string):
-    with open("bootstrap.sh", "w+") as f:
-        f.write(BASE_BOOTSTRAP_CONFIG.safe_substitute(rdb=data_base_string))
-
-
 def query_and_install_boxes(m_currently_installed_boxes):
     # Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
     print " System Box Status :"
