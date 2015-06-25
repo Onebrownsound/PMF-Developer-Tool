@@ -97,10 +97,10 @@ def query_and_install_boxes(m_currently_installed_boxes):
 
 def fetch_system_boxes():
     m_box_results = []
-    #Automates calling "vagrant box list" from the cmd line
+    # Automates calling "vagrant box list" from the cmd line
     m_query_system = subprocess.check_output(["vagrant", "box", "list"]).split("\n")
     for item in m_query_system:
-        #Does string manipulation to essentially extract only the most important parts of the "vagrant box list" cmd
+        # Does string manipulation to essentially extract only the most important parts of the "vagrant box list" cmd
         try:
             box_name = item.rstrip().split()
             m_box_results.append(box_name[0])

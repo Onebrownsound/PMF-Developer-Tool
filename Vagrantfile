@@ -1,5 +1,5 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "chef/ubuntu-14.04"
   config.vm.provision :shell, path: "bootstrap.sh"
   config.vm.network "public_network", use_dhcp_assigned_default_route:true
    config.vm.provider :virtualbox do |vb|
