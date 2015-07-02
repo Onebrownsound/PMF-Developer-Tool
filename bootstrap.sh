@@ -47,9 +47,9 @@ mount -t nfs -o ro,intr,sync,soft,vers=2 lnxx64r6:/port/edaport/R729999D/tape/al
 mkdir /installs
 
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
-serverMajRel=80
+serverMajRel=81
 clientMajRel=80
-clientMinRel=09
+clientMinRel=10
 pmfRel=806
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development

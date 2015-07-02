@@ -1,5 +1,5 @@
 from string import Template
-import subprocess
+import subprocess, os, argparse
 
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
 OPERATING_SYSTEMS = {
@@ -37,7 +37,8 @@ MIN_CLIENT_OPTIONS = {
     "81": {1: "05"},
     "82": {1: "00"}
 }
-
+# DYNAMIC_CLIENT_OPTIONS is a on the fly global dictionary built up by scanning bigport for valid client versions
+DYNAMIC_CLIENT_OPTIONS = {}
 
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
 # Template objects may not be treated as regular strings
@@ -289,13 +290,14 @@ sed  "s/localhost/$IP/" /vagrant/loadWF.html.template > /vagrant/loadWF.html""")
 
 
 def accept_only_integers():
-    prompt=None
-    while(prompt==None):
+    prompt = None
+    while (prompt == None):
         try:
-            prompt=int(raw_input())
+            prompt = int(raw_input())
         except ValueError:
             print("Sorry that is not an acceptable input please try again or exit the program.")
     return prompt
+
 
 # function responsible for prompting user for OS Choice
 def prompt_user_choices():
@@ -303,6 +305,7 @@ def prompt_user_choices():
     m_os_choice_list = {}
     m_user_os_choice = None
     m_user_server_choice = None
+    m_user_client_choice=None
     m_user_majclient_choice = None
     m_user_minclient_choice = None
 
@@ -321,55 +324,49 @@ def prompt_user_choices():
             m_user_os_choice = m_os_choice_list[m_user_integer_choice]
         except:
             print("Sorry that is not an acceptable input please try again or exit the program.")
-            m_user_os_choice=None
+            m_user_os_choice = None
 
     print "\nPlease select a Reporting Server Version :"
-    for key,value in REPORTING_SERVER_OPTIONS.items():
-        print key,value
+    for key, value in REPORTING_SERVER_OPTIONS.items():
+        print key, value
     while (m_user_server_choice is None):
         m_user_integer_choice = accept_only_integers()
         try:
             m_user_server_choice = REPORTING_SERVER_OPTIONS[m_user_integer_choice]
         except:
             print("Sorry that is not an acceptable input please try again or exit the program.")
-            m_user_server_choice=None
+            m_user_server_choice = None
 
     print "\nPlease select a Client Major Version:"
-    for key,value in MAJ_CLIENT_OPTIONS.items():
-        print key,value
-    while (m_user_majclient_choice is None):
+    for key, value in DYNAMIC_CLIENT_OPTIONS.items():
+        print key, value
+    while (m_user_client_choice is None):
         m_user_integer_choice = accept_only_integers()
         try:
-            m_user_majclient_choice = MAJ_CLIENT_OPTIONS[m_user_integer_choice]
+            m_user_client_choice = DYNAMIC_CLIENT_OPTIONS[m_user_integer_choice]
         except:
             print("Sorry that is not an acceptable input please try again or exit the program.")
-            m_user_majclient_choice=None
+            m_user_client_choice = None
+
+    #The users major and minor client choice are determined by slicing the users client choice
+    #The maj client is the first 2 letters while the minor client choice are the preceeding two letters.
+    m_user_majclient_choice=m_user_client_choice[0:2]
+    m_user_minclient_choice=m_user_client_choice[2:4]
 
 
-    m_minclient_pivot=MIN_CLIENT_OPTIONS[m_user_majclient_choice]
-    print "\nPlease select a Client Minor Version:"
-    for key,value in m_minclient_pivot.items():
-        print key,value
-    while (m_user_minclient_choice is None):
-        m_user_integer_choice = accept_only_integers()
-        try:
-            m_user_minclient_choice = m_minclient_pivot[m_user_integer_choice]
-        except:
-            print("Sorry that is not an acceptable input please try again or exit the program.")
-            m_user_minclient_choice=None
 
 
 
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
-    return (m_user_os_choice,m_user_server_choice,m_user_majclient_choice,m_user_minclient_choice)
+    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice)
 
 
     # Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
 
 
 def write_settings(m_user_settings):
-    m_user_os_choice,m_user_server_choice,m_user_majclient_choice,m_user_minclient_choice=m_user_settings
+    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice = m_user_settings
 
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -382,8 +379,10 @@ def write_settings(m_user_settings):
 
     print ("...Writing To Shell Script")
     try:
-        with open ("bootstrap.sh","w+") as f:
-            f.write(BASE_SHELL_SCRIPT.safe_substitute(reportingServer=m_user_server_choice,majorClient=m_user_majclient_choice,minorClient=m_user_minclient_choice))
+        with open("bootstrap.sh", "w+") as f:
+            f.write(BASE_SHELL_SCRIPT.safe_substitute(reportingServer=m_user_server_choice,
+                                                      majorClient=m_user_majclient_choice,
+                                                      minorClient=m_user_minclient_choice))
     except IOError:
         print "Error writing to file"
     print ("Shellscript succesfully written")
@@ -391,7 +390,7 @@ def write_settings(m_user_settings):
 
 def query_and_install_boxes(m_currently_installed_boxes):
     # Use the vagrant system object to list out all currently installed boxes and append them to m_currently_installed_boxes
-    print " System Box Status :"
+    print "\n System Box Status :"
 
     # Will trigger only if no boxes are installed
     if not m_currently_installed_boxes:
@@ -424,14 +423,32 @@ def fetch_system_boxes():
 
 
 def main():
-    # Create a Vagrant object for the system in order to retrieve status information and such
-    # Query system to see if any boxes are installed
+    # connect to bigport on rediron1 to parse client versions
+    explore_bigport()
     m_installed_vagrant_boxes = fetch_system_boxes()
 
     query_and_install_boxes(m_installed_vagrant_boxes)
 
     m_user_settings = prompt_user_choices()
     write_settings(m_user_settings)
+
+
+def explore_bigport():
+    try:
+        path = "//rediron1/u1/bigport/rels_development/"
+        print "...Attempting to explore bigport..."
+
+        # lists all directories in the path Z:/bigport/rels_development
+        versions = os.listdir(path)
+        # remove all possibilites that do not begin with 8 or 7 and are 3 or fewer characters AKA non-client versions
+        # this works only for clients that fit the model 8XXX* or 7XXX* where X is a digit and * is a wildcard aka anything
+        versions = filter(lambda x: (x[0] == "8" or x[0] == "7") and len(x) > 3, versions)
+
+        for index, item in enumerate(versions, start=1):
+            DYNAMIC_CLIENT_OPTIONS[index] = item
+        print "Successfully explored bigport built client options."
+    except:
+        print "There was an error exploring bigport. Please check connections and ensure the drive is mounted and mapped to the letter Z."
 
 
 if __name__ == "__main__":
