@@ -176,9 +176,12 @@ clientRel=$clientMajRel$clientMinRel
 #clientRel=head
 
 #Get the latest WF Client install and copy to local install folder
+#Sometimes the WF client directory name isn't a pure 4 digit number. It sometimes has hf suffix to denote hotfix.case
+#So One has to add a wildcard * to the directory, but not the actual instalWebFocusXXXX.bin where XXXX is the 4 digit version number
 newestClient=$(ls /bigport/${relsLoc}/${clientRel}*/webfocus | tail -1)
 newestClientGen=$(ls /bigport/${relsLoc}/${clientRel}*/webfocus/${newestClient} | tail -1)
-cp /bigport/${relsLoc}/${clientRel}/webfocus/${newestClient}/${newestClientGen}/unix_single_file_pkg/installWebFOCUS${clientRel}.bin /installs
+copyClientPath=$(cp /bigport/${relsLoc}/${clientRel}*/webfocus/${newestClient}/${newestClientGen}/unix_single_file_pkg/installWebFOCUS${clientRel}.bin /installs)
+echo "$copyClientPath"
 cd /installs
 
 #Setup the properties file for WF Client silent install

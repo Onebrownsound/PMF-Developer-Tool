@@ -47,9 +47,9 @@ mount -t nfs -o ro,intr,sync,soft,vers=2 lnxx64r6:/port/edaport/R729999D/tape/al
 mkdir /installs
 
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
-serverMajRel=81
-clientMajRel=81
-clientMinRel=05
+serverMajRel=80
+clientMajRel=80
+clientMinRel=09
 pmfRel=806
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
@@ -120,9 +120,12 @@ clientRel=$clientMajRel$clientMinRel
 #clientRel=head
 
 #Get the latest WF Client install and copy to local install folder
-newestClient=`ls /bigport/${relsLoc}/${clientRel}/webfocus | tail -1`
-newestClientGen=`ls /bigport/${relsLoc}/${clientRel}/webfocus/${newestClient} | tail -1`
-cp /bigport/${relsLoc}/${clientRel}/webfocus/${newestClient}/${newestClientGen}/unix_single_file_pkg/installWebFOCUS${clientRel}.bin /installs
+#Sometimes the WF client directory name isn't a pure 4 digit number. It sometimes has hf suffix to denote hotfix.case
+#So One has to add a wildcard * to the directory, but not the actual instalWebFocusXXXX.bin where XXXX is the 4 digit version number
+newestClient=$(ls /bigport/${relsLoc}/${clientRel}*/webfocus | tail -1)
+newestClientGen=$(ls /bigport/${relsLoc}/${clientRel}*/webfocus/${newestClient} | tail -1)
+copyClientPath=$(cp /bigport/${relsLoc}/${clientRel}*/webfocus/${newestClient}/${newestClientGen}/unix_single_file_pkg/installWebFOCUS${clientRel}.bin /installs)
+echo "$copyClientPath"
 cd /installs
 
 #Setup the properties file for WF Client silent install
@@ -131,7 +134,7 @@ sed "s/WebFOCUS80/WebFOCUS$clientMajRel/g" /vagrant/wf.properties > /installs/wf
 #Update pmf silent install properties
 sed -i "s/WebFOCUS80/WebFOCUS$clientMajRel/g" /installs/pmf.properties
 
-#Create the WF Repository database in MySQL 
+#Create the WF Repository database in MySQL
 mysql -u root -proot -e "create database WebFOCUS8"
 
 #Run the installer
@@ -223,8 +226,7 @@ chown tomcat7:tomcat7 /ibi -R
 IP=`ifconfig eth1 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
 ENDTIME=$(date +%s)
 echo "It took $(($ENDTIME - $STARTTIME)) seconds ($((($ENDTIME - $STARTTIME)/60)) minutes) to complete this task"
-echo "Public IP Address: $IP" 
+echo "Public IP Address: $IP"
 
 #update the loadWF html file to contain the proper URL for this new VM image
 sed  "s/localhost/$IP/" /vagrant/loadWF.html.template > /vagrant/loadWF.html
-
