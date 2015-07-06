@@ -66,7 +66,7 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 
 #Update the packages and install the required ones
 apt-get update
-apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java
+apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\\n<Connector port="8080"/' /etc/tomcat7/server.xml
@@ -305,7 +305,7 @@ def prompt_user_choices():
     m_os_choice_list = {}
     m_user_os_choice = None
     m_user_server_choice = None
-    m_user_client_choice=None
+    m_user_client_choice = None
     m_user_majclient_choice = None
     m_user_minclient_choice = None
 
@@ -337,7 +337,7 @@ def prompt_user_choices():
             print("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_server_choice = None
 
-    print "\nPlease select a Client Major Version:"
+    print "\nPlease select a Client Version:"
     for key, value in DYNAMIC_CLIENT_OPTIONS.items():
         print key, value
     while (m_user_client_choice is None):
@@ -348,10 +348,10 @@ def prompt_user_choices():
             print("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_client_choice = None
 
-    #The users major and minor client choice are determined by slicing the users client choice
-    #The maj client is the first 2 letters while the minor client choice are the preceeding two letters.
-    m_user_majclient_choice=m_user_client_choice[0:2]
-    m_user_minclient_choice=m_user_client_choice[2:4]
+    # The users major and minor client choice are determined by slicing the users client choice
+    # The maj client is the first 2 letters while the minor client choice are the preceeding two letters.
+    m_user_majclient_choice = m_user_client_choice[0:2]
+    m_user_minclient_choice = m_user_client_choice[2:4]
 
 
 
@@ -409,6 +409,7 @@ def query_and_install_boxes(m_currently_installed_boxes):
 
 
 def fetch_system_boxes():
+    print "\n...Fetching Installed System Boxes..."
     m_box_results = []
     # Automates calling "vagrant box list" from the cmd line
     m_query_system = subprocess.check_output(["vagrant", "box", "list"]).split("\n")
@@ -422,21 +423,10 @@ def fetch_system_boxes():
     return m_box_results
 
 
-def main():
-    # connect to bigport on rediron1 to parse client versions
-    explore_bigport()
-    m_installed_vagrant_boxes = fetch_system_boxes()
-
-    query_and_install_boxes(m_installed_vagrant_boxes)
-
-    m_user_settings = prompt_user_choices()
-    write_settings(m_user_settings)
-
-
 def explore_bigport():
     try:
         path = "//rediron1/u1/bigport/rels_development/"
-        print "...Attempting to explore bigport..."
+        print "\n...Attempting to explore bigport..."
 
         # lists all directories in the path Z:/bigport/rels_development
         versions = os.listdir(path)
@@ -449,6 +439,17 @@ def explore_bigport():
         print "Successfully explored bigport built client options."
     except:
         print "There was an error exploring bigport. Please check connections and ensure the drive is mounted and mapped to the letter Z."
+
+
+def main():
+    # connect to bigport on rediron1 to parse client versions
+    explore_bigport()
+
+    m_installed_vagrant_boxes = fetch_system_boxes()
+    query_and_install_boxes(m_installed_vagrant_boxes)
+
+    m_user_settings = prompt_user_choices()
+    write_settings(m_user_settings)
 
 
 if __name__ == "__main__":

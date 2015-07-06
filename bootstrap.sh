@@ -9,7 +9,7 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 
 #Update the packages and install the required ones
 apt-get update
-apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java
+apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\n<Connector port="8080"/' /etc/tomcat7/server.xml
@@ -48,8 +48,8 @@ mkdir /installs
 
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
 serverMajRel=81
-clientMajRel=80
-clientMinRel=10
+clientMajRel=81
+clientMinRel=05
 pmfRel=806
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
