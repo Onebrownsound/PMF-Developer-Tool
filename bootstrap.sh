@@ -9,7 +9,16 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 
 #Update the packages and install the required ones
 apt-get update
-apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java
+#apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql-client
+apt-get install -y postgresql
+
+#Setup postgresql root password for use later
+POSTGRESQL_PW="root"
+sudo -u postgres createuser --superuser $USER
+sudo -u postgres psql
+postgres=# \password $USER
+exit
+#TODO REMOVE exit
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\n<Connector port="8080"/' /etc/tomcat7/server.xml
@@ -95,8 +104,11 @@ echo "  admin_level = SRV" >> /ibi/profiles/admin.cfg
 echo "END" >> /ibi/profiles/admin.cfg
 
 #Create MySQL adapter and configure for classpath
-sed -i 's/\[Adapters\]/\[Adapters\]\nmysql_jdbdrv = com.mysql.jdbc.Driver\nmysql_access = y\nmysql_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
-sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/mysql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+#sed -i 's/\[Adapters\]/\[Adapters\]\nmysql_jdbdrv = com.mysql.jdbc.Driver\nmysql_access = y\nmysql_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+#sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/mysql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+#Create Postgresql adapter and configure for classpath
+sed -i 's/\[Adapters\]/\[Adapters\]\npstgr_jdbdrv = org.postgresql.Driver\npstgr_access = y\npstgr_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/postgresql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
 
 #Set the proper code page [Should parameterize for Unicode testing]
 cp /vagrant/nlscfg.err /ibi/srv$serverMajRel/wfs/etc
@@ -106,8 +118,10 @@ sed "s/srv80/srv$serverMajRel/g" /vagrant/pmf.properties > /installs/pmf.propert
 
 #Setup proper ownership, copy MySQL JDBC driver into proper location
 chown tomcat7:tomcat7 /ibi -R
-cp /usr/share/java/mysql.jar /var/lib/tomcat7/shared/
-cp /usr/share/java/mysql.jar /usr/share/tomcat7/lib
+# cp /usr/share/java/mysql.jar /var/lib/tomcat7/shared/
+# cp /usr/share/java/mysql.jar /usr/share/tomcat7/lib
+cp /usr/share/java/postgresql.jar /var/lib/tomcat7/shared/
+cp /usr/share/java/postgresql.jar /usr/share/tomcat7/lib
 
 #Start the reporting server
 /etc/init.d/edastart start
