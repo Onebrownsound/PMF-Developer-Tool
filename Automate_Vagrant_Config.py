@@ -1,5 +1,5 @@
 from string import Template
-import subprocess, os, argparse
+import subprocess, os
 
 # Global dictionary declaration, which houses all various configurations for each particular OS Choice
 OPERATING_SYSTEMS = {
@@ -40,6 +40,11 @@ MIN_CLIENT_OPTIONS = {
 # DYNAMIC_CLIENT_OPTIONS is a on the fly global dictionary built up by scanning bigport for valid client versions
 DYNAMIC_CLIENT_OPTIONS = {}
 
+
+DB_OPTIONS={1:{"common_name":"MySQL","bash_key":1,"wf_name":"SQLMYSQL","host":"localhost","port":"3306","id":"root","password":"root"},
+            2:{"common_name":"PostgreSQL","bash_key":2,"wf_name":"sqlpstgr","host":"localhost","port":"5432","id":"postgres","password":"postgres"}
+            }
+
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
 # Template objects may not be treated as regular strings
 # In order to extract strings from a template object use the TEMPLATEOBJECT.safe_substitute() method,
@@ -57,6 +62,8 @@ end""")
 
 BASE_SHELL_SCRIPT = Template("""#!/usr/bin/env bash
 
+DBCHOICE=${dbChoice}
+
 #Setup the start time
 STARTTIME=$(date +%s)
 
@@ -65,17 +72,17 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password pas
 sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_again password root'
 
 #Update the packages and install the required ones
-apt-get update
-#apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql-client
-apt-get install -y postgresql
+sudo apt-get update
+sudo apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql postgresql-contrib
+
 
 #Setup postgresql root password for use later
-POSTGRESQL_PW="root"
-sudo -u postgres createuser --superuser $USER
-sudo -u postgres psql
-postgres=# \password $USER
-exit
-#TODO REMOVE exit
+sudo -u postgres psql -c "ALTER USER postgres with password 'postgres';"
+#Create the WF Repository database in POSTGRESQL
+sudo -u postgres createdb WebFOCUS8
+
+#Create the WF Repository database in MySQL
+#mysql -u root -proot -e "create database WebFOCUS8"
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\\n<Connector port="8080"/' /etc/tomcat7/server.xml

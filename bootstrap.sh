@@ -9,16 +9,15 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 
 #Update the packages and install the required ones
 apt-get update
-#apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql-client
-apt-get install -y postgresql
+apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql postgresql-contrib
 
 #Setup postgresql root password for use later
-POSTGRESQL_PW="root"
-sudo -u postgres createuser --superuser $USER
-sudo -u postgres psql
-postgres=# \password $USER
-exit
-#TODO REMOVE exit
+sudo -u postgres psql -c "ALTER USER postgres with password 'postgres';"
+
+#Create the WF Repository database in POSTGRESQL
+sudo -u postgres createdb WebFOCUS8
+#Create the WF Repository database in MySQL
+#mysql -u root -proot -e "create database WebFOCUS8"
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\n<Connector port="8080"/' /etc/tomcat7/server.xml
