@@ -66,7 +66,6 @@ DBCHOICE=${dbChoice}
 
 #Setup the start time
 STARTTIME=$(date +%s)
-
 #Preset the MySQL root password for use later
 sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password password root'
 sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_again password root'
@@ -75,14 +74,20 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 sudo apt-get update
 sudo apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql postgresql-contrib
 
+if [[ "$DBCHOICE" == "1" ]]; then
+    #Create the WF Repository database in MySQL
+    mysql -u root -proot -e "create database WebFOCUS8"
+elif [[ "$DBCHOICE" == "2" ]]; then
+    #Setup postgresql root password for use later
+    sudo -u postgres psql -c "ALTER USER postgres with password 'postgres';"
+    #Create the WF Repository database in POSTGRESQL
+    sudo -u postgres createdb WebFOCUS8
+else
+    exit 1
+fi
 
-#Setup postgresql root password for use later
-sudo -u postgres psql -c "ALTER USER postgres with password 'postgres';"
-#Create the WF Repository database in POSTGRESQL
-sudo -u postgres createdb WebFOCUS8
 
-#Create the WF Repository database in MySQL
-#mysql -u root -proot -e "create database WebFOCUS8"
+
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\\n<Connector port="8080"/' /etc/tomcat7/server.xml
@@ -167,12 +172,20 @@ echo "BEGIN" >> /ibi/profiles/admin.cfg
 echo "  admin_level = SRV" >> /ibi/profiles/admin.cfg
 echo "END" >> /ibi/profiles/admin.cfg
 
-#Create MySQL adapter and configure for classpath
-#sed -i 's/\[Adapters\]/\[Adapters\]\\nmysql_jdbdrv = com.mysql.jdbc.Driver\\nmysql_access = y\\nmysql_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
-#sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/mysql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
-#Create Postgresql adapter and configure for classpath
-sed -i 's/\[Adapters\]/\[Adapters\]\\npstgr_jdbdrv = org.postgresql.Driver\\npstgr_access = y\\npstgr_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
-sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/postgresql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+#Create Adapter based off of DBCHOICE 1:MYSQL 2:POSTGRES
+if [[ "$DBCHOICE" == "1" ]]; then
+   #Create MySQL adapter and configure for classpath
+   sed -i 's/\[Adapters\]/\[Adapters\]\\nmysql_jdbdrv = com.mysql.jdbc.Driver\\nmysql_access = y\\nmysql_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+   sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/mysql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+elif [[ "$DBCHOICE" == "2" ]]; then
+   #Create Postgresql adapter and configure for classpath
+   sed -i 's/\[Adapters\]/\[Adapters\]\\npstgr_jdbdrv = org.postgresql.Driver\\npstgr_access = y\\npstgr_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+   sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/postgresql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+
+else
+    echo "There was a problem changing JDBC adapter"
+    exit 1
+fi
 
 #Set the proper code page [Should parameterize for Unicode testing]
 cp /vagrant/nlscfg.err /ibi/srv$serverMajRel/wfs/etc
@@ -403,7 +416,8 @@ def write_settings(m_user_settings):
         with open("bootstrap.sh", "w+") as f:
             f.write(BASE_SHELL_SCRIPT.safe_substitute(reportingServer=m_user_server_choice,
                                                       majorClient=m_user_majclient_choice,
-                                                      minorClient=m_user_minclient_choice))
+                                                      minorClient=m_user_minclient_choice,
+                                                      dbChoice=2))
     except IOError:
         print "Error writing to file"
     print ("Shellscript succesfully written")
