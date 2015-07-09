@@ -40,10 +40,72 @@ MIN_CLIENT_OPTIONS = {
 # DYNAMIC_CLIENT_OPTIONS is a on the fly global dictionary built up by scanning bigport for valid client versions
 DYNAMIC_CLIENT_OPTIONS = {}
 
-
+#Global dictionary for housing options related to choosing a db and important values that need to be inserted into configuration files (bootstrap.sh and pmf.properties)
 DB_OPTIONS={1:{"common_name":"MySQL","bash_key":1,"wf_name":"SQLMYSQL","host":"localhost","port":"3306","id":"root","password":"root"},
             2:{"common_name":"PostgreSQL","bash_key":2,"wf_name":"sqlpstgr","host":"localhost","port":"5432","id":"postgres","password":"postgres"}
             }
+
+PMF_PROPERTIES_CONFIG=Template("""# Fri Feb 28 16:47:06 EST 2014
+# Replay feature output
+# ---------------------
+# This file was built by the Replay feature of InstallAnywhere.
+# It contains variables that were set by Panels, Consoles or Custom Code.
+
+
+
+#Install
+#-------
+-fileOverwrite_/bigscm/432/ibi/uninstall_pmf/Uninstall_PMF/Uninstall_PMF.lax=Yes
+
+#PLEASE DO NOT EDIT ABOVE THIS LINE.
+
+#You CAN EDIT the VALUES of any NAME-VALUE pair from here on.
+
+
+#----------------------------------------------------------------------------------------------------
+INSTALLER_LOCALE=en
+PRODUCT_CODE=8888
+
+#To install WebFOCUS Client Components, INSTALL_WF_COMP must be 'Y' otherwise assign 'N'
+#---------------------------------------------------------------------------------------
+INSTALL_WF_COMP=Y
+
+#Enter WebFOCUS Client Configuration Directory(e.g., ibi/WebFOCUS/client/wfc)
+#----------------------------------------------------------------------------
+WF_CLIENT=/ibi/WebFOCUS80/client/wfc
+
+#Specify WebFOCUS Repository id and password#also, to pass encrypted password use WF_REPOS_PWD_ENC,
+#to pass plain password use WF_REPOS_PWD and either leave
+# WF_REPOS_PWD_ENC blank or delete it
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+WF_REPOS_ID=admin
+WF_REPOS_PWD_ENC=AFA6C5F3E6C0C5CB
+
+#To install Reporting Server Components, INSTALL_SRV_COMP must be 'Y' otherwise assign 'N'
+#-----------------------------------------------------------------------------------------
+INSTALL_SRV_COMP=Y
+
+#Enter WebFOCUS Server EDACONF Directory(e.g., ibi/srv/wfs)
+#----------------------------------------------------------
+SRV_CONFIG=/ibi/srv80/wfs
+
+#To specify databse provide short name, e.g.,SQLMSS for "Microsoft SQL Server", SQLORA for "Oracle", DB2 for "DB2", SQLMYSQL for "MySQL", SQLDBC for "Teradata", SQLHYP for "HyperStage"
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DB_TYPE=${dbType}
+
+#Specify user database host, port, id and password#also, to pass encrypted password use DB_PSWD_ENC,
+#to pass plain password use DB_PSWD and either leave
+# DB_PSWD_ENC blank or delete it
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DB_HOST=${dbHost}
+DB_PORT=${dbPort}
+DB_ID=${dbId}
+DB_PSWD=${dbPswd}
+
+#Silent install will continue if CONTINUE_ON_EXISTING_PMF is 'Y' otherwise assign 'N'
+#------------------------------------------------------------------------------------
+CONTINUE_ON_EXISTING_PMF=N
+""")
 
 # This constant houses the baseline config file AS A TEMPLATE OBJECT
 # Template objects may not be treated as regular strings
@@ -85,9 +147,6 @@ elif [[ "$DBCHOICE" == "2" ]]; then
 else
     exit 1
 fi
-
-
-
 
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\\n<Connector port="8080"/' /etc/tomcat7/server.xml
