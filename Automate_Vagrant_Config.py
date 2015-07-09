@@ -45,7 +45,7 @@ DB_OPTIONS={1:{"common_name":"MySQL","bash_key":1,"wf_name":"SQLMYSQL","host":"l
             2:{"common_name":"PostgreSQL","bash_key":2,"wf_name":"sqlpstgr","host":"localhost","port":"5432","id":"postgres","password":"postgres"}
             }
 
-PMF_PROPERTIES_CONFIG=Template("""# Fri Feb 28 16:47:06 EST 2014
+BASE_PMF_PROPERTIES_CONFIG=Template("""# Fri Feb 28 16:47:06 EST 2014
 # Replay feature output
 # ---------------------
 # This file was built by the Replay feature of InstallAnywhere.
@@ -401,6 +401,7 @@ def prompt_user_choices():
     m_user_client_choice = None
     m_user_majclient_choice = None
     m_user_minclient_choice = None
+    m_user_db_choice=None
 
 
     # Dynamically build a choice list for Operating System choices
@@ -446,20 +447,32 @@ def prompt_user_choices():
     m_user_majclient_choice = m_user_client_choice[0:2]
     m_user_minclient_choice = m_user_client_choice[2:4]
 
+    print "\nPlease select a Database:"
+    for key in DB_OPTIONS:
+        print key, DB_OPTIONS[key]["common_name"]
+    while (m_user_db_choice is None):
+        m_user_db_choice = accept_only_integers()
+        try:
+            m_user_db_choice = DB_OPTIONS[m_user_db_choice]
+        except:
+            print("Sorry that is not an acceptable input please try again or exit the program.")
+            m_user_db_choice = None
+
 
 
 
 
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
-    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice)
+    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice,m_user_db_choice)
 
 
     # Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
 
 
 def write_settings(m_user_settings):
-    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice = m_user_settings
+    #important to remember m_user_db_choice is a copy of the inner hashtable of DB_OPTIONS..just a fyi
+    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice,m_user_db_choice = m_user_settings
 
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -476,10 +489,22 @@ def write_settings(m_user_settings):
             f.write(BASE_SHELL_SCRIPT.safe_substitute(reportingServer=m_user_server_choice,
                                                       majorClient=m_user_majclient_choice,
                                                       minorClient=m_user_minclient_choice,
-                                                      dbChoice=2))
+                                                      dbChoice=m_user_db_choice["bash_key"]))
     except IOError:
         print "Error writing to file"
     print ("Shellscript succesfully written")
+
+    print ("...Writing To PMF.Properties")
+    try:
+        with open("pmf.properties","w+") as f:
+            f.write(BASE_PMF_PROPERTIES_CONFIG.safe_substitute(dbType=m_user_db_choice["wf_name"],
+                                                               dbHost=m_user_db_choice["host"],
+                                                               dbPort=m_user_db_choice["port"],
+                                                               dbId=m_user_db_choice["id"],
+                                                               dbPswd=m_user_db_choice["password"]))
+    except IOError:
+        print"Error writing to file"
+    print("pmf.properties succesfully written")
 
 
 def query_and_install_boxes(m_currently_installed_boxes):

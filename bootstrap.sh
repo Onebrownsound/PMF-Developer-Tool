@@ -24,9 +24,6 @@ else
     exit 1
 fi
 
-
-
-
 #Update Tomcat & Apache for using port 80
 sed -i 's/<Connector port="8080"/<Connector port="8009" protocol="AJP\/1.3" redirectPort="8443" \/>\n<Connector port="8080"/' /etc/tomcat7/server.xml
 sed -i 's/\/etc\/libapache2-mod-jk\/workers.properties/\/etc\/apache2\/workers.properties/' /etc/apache2/mods-available/jk.conf
