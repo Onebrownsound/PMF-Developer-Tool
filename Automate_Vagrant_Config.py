@@ -123,7 +123,7 @@ BASE_VAGRANT_CONFIG = Template("""Vagrant.configure("2") do |config|
 end""")
 
 BASE_SHELL_SCRIPT = Template("""#!/usr/bin/env bash
-
+#DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
 DBCHOICE=${dbChoice}
 
 #Setup the start time
@@ -145,6 +145,7 @@ elif [[ "$DBCHOICE" == "2" ]]; then
     #Create the WF Repository database in POSTGRESQL
     sudo -u postgres createdb WebFOCUS8
 else
+    echo "There was a problem setting up database credentials check the source script"
     exit 1
 fi
 
@@ -187,7 +188,7 @@ mkdir /installs
 serverMajRel=${reportingServer}
 clientMajRel=${majorClient}
 clientMinRel=${minorClient}
-pmfRel=806
+pmfRel=807
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
 
@@ -254,8 +255,8 @@ sed "s/srv80/srv$serverMajRel/g" /vagrant/pmf.properties > /installs/pmf.propert
 
 #Setup proper ownership, copy MySQL JDBC driver into proper location
 chown tomcat7:tomcat7 /ibi -R
-# cp /usr/share/java/mysql.jar /var/lib/tomcat7/shared/
-# cp /usr/share/java/mysql.jar /usr/share/tomcat7/lib
+cp /usr/share/java/mysql.jar /var/lib/tomcat7/shared/
+cp /usr/share/java/mysql.jar /usr/share/tomcat7/lib
 cp /usr/share/java/postgresql.jar /var/lib/tomcat7/shared/
 cp /usr/share/java/postgresql.jar /usr/share/tomcat7/lib
 
@@ -283,9 +284,6 @@ sed "s/WebFOCUS80/WebFOCUS$clientMajRel/g" /vagrant/wf.properties > /installs/wf
 
 #Update pmf silent install properties
 sed -i "s/WebFOCUS80/WebFOCUS$clientMajRel/g" /installs/pmf.properties
-
-#Create the WF Repository database in MySQL
-mysql -u root -proot -e "create database WebFOCUS8"
 
 #Run the installer
 ./installWebFOCUS${clientRel}.bin -i silent -f /installs/wf.properties
@@ -394,15 +392,13 @@ def accept_only_integers():
 
 # function responsible for prompting user for OS Choice
 def prompt_user_choices():
-    # need a seperate os_choice list since the list is built dynamically everytime
+    #function is sort of ugly, and does repeat itself, however each case is intricate and has certain nuances specific tied to it's purpose
+    # need a seperate os_choice list since the list is built dynamically every time
     m_os_choice_list = {}
     m_user_os_choice = None
     m_user_server_choice = None
     m_user_client_choice = None
-    m_user_majclient_choice = None
-    m_user_minclient_choice = None
     m_user_db_choice=None
-
 
     # Dynamically build a choice list for Operating System choices
     for i, j in enumerate(OPERATING_SYSTEMS, start=1):
@@ -564,11 +560,17 @@ def main():
     # connect to bigport on rediron1 to parse client versions
     explore_bigport()
 
-    m_installed_vagrant_boxes = fetch_system_boxes()
-    query_and_install_boxes(m_installed_vagrant_boxes)
+    #ask the system "what boxes do you currently have installed?"
+    installed_vagrant_boxes = fetch_system_boxes()
 
-    m_user_settings = prompt_user_choices()
-    write_settings(m_user_settings)
+    #compare currently installed boxes to desired boxes and install the difference
+    query_and_install_boxes(installed_vagrant_boxes)
+
+    #user_settings dictates what and how vagrant will load various settings, so we need to ask the user for this data
+    user_settings = prompt_user_choices()
+
+    #write the settings to various configuration files,that vagrant/guest OS will read and run
+    write_settings(user_settings)
 
 
 if __name__ == "__main__":

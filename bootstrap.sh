@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+#DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
 DBCHOICE=2
 
 #Setup the start time
@@ -21,6 +21,7 @@ elif [[ "$DBCHOICE" == "2" ]]; then
     #Create the WF Repository database in POSTGRESQL
     sudo -u postgres createdb WebFOCUS8
 else
+    echo "There was a problem setting up database credentials check the source script"
     exit 1
 fi
 
@@ -60,10 +61,10 @@ mount -t nfs -o ro,intr,sync,soft,vers=2 lnxx64r6:/port/edaport/R729999D/tape/al
 mkdir /installs
 
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
-serverMajRel=81
-clientMajRel=81
-clientMinRel=05
-pmfRel=806
+serverMajRel=80
+clientMajRel=80
+clientMinRel=09
+pmfRel=807
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
 
@@ -130,8 +131,8 @@ sed "s/srv80/srv$serverMajRel/g" /vagrant/pmf.properties > /installs/pmf.propert
 
 #Setup proper ownership, copy MySQL JDBC driver into proper location
 chown tomcat7:tomcat7 /ibi -R
-# cp /usr/share/java/mysql.jar /var/lib/tomcat7/shared/
-# cp /usr/share/java/mysql.jar /usr/share/tomcat7/lib
+cp /usr/share/java/mysql.jar /var/lib/tomcat7/shared/
+cp /usr/share/java/mysql.jar /usr/share/tomcat7/lib
 cp /usr/share/java/postgresql.jar /var/lib/tomcat7/shared/
 cp /usr/share/java/postgresql.jar /usr/share/tomcat7/lib
 
@@ -159,9 +160,6 @@ sed "s/WebFOCUS80/WebFOCUS$clientMajRel/g" /vagrant/wf.properties > /installs/wf
 
 #Update pmf silent install properties
 sed -i "s/WebFOCUS80/WebFOCUS$clientMajRel/g" /installs/pmf.properties
-
-#Create the WF Repository database in MySQL
-mysql -u root -proot -e "create database WebFOCUS8"
 
 #Run the installer
 ./installWebFOCUS${clientRel}.bin -i silent -f /installs/wf.properties
