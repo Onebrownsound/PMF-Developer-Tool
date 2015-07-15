@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
-DBCHOICE=1
+DBCHOICE=2
 
 #Setup the start time
 STARTTIME=$(date +%s)

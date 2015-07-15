@@ -344,21 +344,30 @@ if [[ $? -ne 0 ]] ; then
    exit 1
 fi
 
-echo "======================================================================="
-echo "====================== Updating PMF to Trunk =========================="
-echo "======================================================================="
-#Remove the "external" referenced files since the SVN Checkout process will skip them if they exist
-rm /ibi/apps/mainstreet/js/tdgchart-min.js
-rm /ibi/apps/mainstreet/jsdebug/tdgchart-min.js
-#Preserve the import log just in case
-cp /ibi/WebFOCUS$clientMajRel/cm/import/pmf/cm_import_pmf.log /home/vagrant/
-rm /ibi/WebFOCUS$clientMajRel/cm/import/pmf -R
 
-#Check out from trunk & revert to the latest in trunk
-svn co svn://pmfsvn/trunk/ibi/apps /ibi/apps --force 1>/dev/null
-svn co svn://pmfsvn/trunk/ibi/WebFOCUS /ibi/WebFOCUS$clientMajRel --force 1>/dev/null
-svn revert /ibi/WebFOCUS$clientMajRel -R
-svn revert /ibi/apps -R
+if [[ "$pmfRel" == "807" ]]; then
+    echo "======================================================================="
+    echo "====================== Updating PMF to Trunk =========================="
+    echo "======================================================================="
+    #Remove the "external" referenced files since the SVN Checkout process will skip them if they exist
+    rm /ibi/apps/mainstreet/js/tdgchart-min.js
+    rm /ibi/apps/mainstreet/jsdebug/tdgchart-min.js
+    #Preserve the import log just in case
+    cp /ibi/WebFOCUS$clientMajRel/cm/import/pmf/cm_import_pmf.log /home/vagrant/
+    rm /ibi/WebFOCUS$clientMajRel/cm/import/pmf -R
+
+    #Check out from trunk & revert to the latest in trunk
+    svn co svn://pmfsvn/trunk/ibi/apps /ibi/apps --force 1>/dev/null
+    svn co svn://pmfsvn/trunk/ibi/WebFOCUS /ibi/WebFOCUS$clientMajRel --force 1>/dev/null
+    svn revert /ibi/WebFOCUS$clientMajRel -R
+    svn revert /ibi/apps -R
+elif [[ "$pmfRel" == "806" ]]; then
+    echo "The default installer for PMF 806 was used. To manually pull down from SVN SSH in using vagrant/vagrant in putty. And execute custom svn commands"
+else
+    echo "There is a problem with the PMF version selected. Please inspect the script and manually check for errors. Possibly in the bigport directory"
+    exit 1
+fi
+
 
 #Change the owner of all ibi files and folders to tomcat7
 chown tomcat7:tomcat7 /ibi -R
