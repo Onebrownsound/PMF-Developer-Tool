@@ -40,12 +40,17 @@ MIN_CLIENT_OPTIONS = {
 # DYNAMIC_CLIENT_OPTIONS is a on the fly global dictionary built up by scanning bigport for valid client versions
 DYNAMIC_CLIENT_OPTIONS = {}
 
-#Global dictionary for housing options related to choosing a db and important values that need to be inserted into configuration files (bootstrap.sh and pmf.properties)
-DB_OPTIONS={1:{"common_name":"MySQL","bash_key":1,"wf_name":"SQLMYSQL","host":"localhost","port":"3306","id":"root","password":"root"},
-            2:{"common_name":"PostgreSQL","bash_key":2,"wf_name":"sqlpstgr","host":"localhost","port":"5432","id":"postgres","password":"postgres"}
-            }
+# Global dictionary for housing options related to choosing a db and important values that need to be inserted into configuration files (bootstrap.sh and pmf.properties)
+DB_OPTIONS = {
+    1: {"common_name": "MySQL", "bash_key": 1, "wf_name": "SQLMYSQL", "host": "localhost", "port": "3306", "id": "root",
+        "password": "root"},
+    2: {"common_name": "PostgreSQL", "bash_key": 2, "wf_name": "sqlpstgr", "host": "localhost", "port": "5432",
+        "id": "postgres", "password": "postgres"}
+    }
 
-BASE_PMF_PROPERTIES_CONFIG=Template("""# Fri Feb 28 16:47:06 EST 2014
+PMF_OPTIONS=['806','807']
+
+BASE_PMF_PROPERTIES_CONFIG = Template("""# Fri Feb 28 16:47:06 EST 2014
 # Replay feature output
 # ---------------------
 # This file was built by the Replay feature of InstallAnywhere.
@@ -188,7 +193,7 @@ mkdir /installs
 serverMajRel=${reportingServer}
 clientMajRel=${majorClient}
 clientMinRel=${minorClient}
-pmfRel=807
+pmfRel=${pmfVersion}
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
 
@@ -392,19 +397,20 @@ def accept_only_integers():
 
 # function responsible for prompting user for OS Choice
 def prompt_user_choices():
-    #function is sort of ugly, and does repeat itself, however each case is intricate and has certain nuances specific tied to it's purpose
+    # function is sort of ugly, and does repeat itself, however each case is intricate and has certain nuances specific tied to it's purpose
     # need a seperate os_choice list since the list is built dynamically every time
     m_os_choice_list = {}
     m_user_os_choice = None
     m_user_server_choice = None
     m_user_client_choice = None
-    m_user_db_choice=None
+    m_user_db_choice = None
+    m_user_pmf_choice = None
 
     # Dynamically build a choice list for Operating System choices
     for i, j in enumerate(OPERATING_SYSTEMS, start=1):
         m_os_choice_list[i] = j
 
-    print "\nPlease select an Operating System :"
+    print "\nPlease select an Operating System : (If unsure select the first option)\n"
     for index, option in m_os_choice_list.items():
         print index, option, OPERATING_SYSTEMS[option]["description"]
 
@@ -416,7 +422,7 @@ def prompt_user_choices():
             print("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_os_choice = None
 
-    print "\nPlease select a Reporting Server Version :"
+    print "\nPlease select a Reporting Server Version : (Disclaimer: Versions 82 and Head may require significant tinkering)\n"
     for key, value in REPORTING_SERVER_OPTIONS.items():
         print key, value
     while (m_user_server_choice is None):
@@ -427,7 +433,7 @@ def prompt_user_choices():
             print("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_server_choice = None
 
-    print "\nPlease select a Client Version:"
+    print "\nPlease select a Client Version:\n"
     for key, value in DYNAMIC_CLIENT_OPTIONS.items():
         print key, value
     while (m_user_client_choice is None):
@@ -443,7 +449,7 @@ def prompt_user_choices():
     m_user_majclient_choice = m_user_client_choice[0:2]
     m_user_minclient_choice = m_user_client_choice[2:4]
 
-    print "\nPlease select a Database:"
+    print "\nPlease select a Database:\n"
     for key in DB_OPTIONS:
         print key, DB_OPTIONS[key]["common_name"]
     while (m_user_db_choice is None):
@@ -454,21 +460,30 @@ def prompt_user_choices():
             print("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_db_choice = None
 
-
+    print "\nPlease select a PMF Version:\n"
+    for index,key in enumerate(PMF_OPTIONS, start=1):
+        print index,key
+    while (m_user_pmf_choice is None):
+        m_user_pmf_choice=accept_only_integers()
+        try:
+            m_user_pmf_choice=PMF_OPTIONS[m_user_pmf_choice-1]
+        except:
+            print ("Sorry that is not an acceptable input please try again or exit the program.")
+            m_user_pmf_choice=None
 
 
 
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
-    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice,m_user_db_choice)
+    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice, m_user_pmf_choice)
 
 
     # Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
 
 
 def write_settings(m_user_settings):
-    #important to remember m_user_db_choice is a copy of the inner hashtable of DB_OPTIONS..just a fyi
-    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice,m_user_db_choice = m_user_settings
+    # important to remember m_user_db_choice is a copy of the inner hashtable of DB_OPTIONS..just a fyi
+    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice,m_user_pmf_choice = m_user_settings
 
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -485,6 +500,7 @@ def write_settings(m_user_settings):
             f.write(BASE_SHELL_SCRIPT.safe_substitute(reportingServer=m_user_server_choice,
                                                       majorClient=m_user_majclient_choice,
                                                       minorClient=m_user_minclient_choice,
+                                                      pmfVersion=m_user_pmf_choice,
                                                       dbChoice=m_user_db_choice["bash_key"]))
     except IOError:
         print "Error writing to file"
@@ -492,7 +508,7 @@ def write_settings(m_user_settings):
 
     print ("...Writing To PMF.Properties")
     try:
-        with open("pmf.properties","w+") as f:
+        with open("pmf.properties", "w+") as f:
             f.write(BASE_PMF_PROPERTIES_CONFIG.safe_substitute(dbType=m_user_db_choice["wf_name"],
                                                                dbHost=m_user_db_choice["host"],
                                                                dbPort=m_user_db_choice["port"],
@@ -501,6 +517,9 @@ def write_settings(m_user_settings):
     except IOError:
         print"Error writing to file"
     print("pmf.properties succesfully written")
+
+    print(
+    "\n...Configuration Files Succesfully Written...\nTo proceed enter the command 'vagrant up' into the command line")
 
 
 def query_and_install_boxes(m_currently_installed_boxes):
@@ -560,16 +579,16 @@ def main():
     # connect to bigport on rediron1 to parse client versions
     explore_bigport()
 
-    #ask the system "what boxes do you currently have installed?"
+    # ask the system "what boxes do you currently have installed?"
     installed_vagrant_boxes = fetch_system_boxes()
 
-    #compare currently installed boxes to desired boxes and install the difference
+    # compare currently installed boxes to desired boxes and install the difference
     query_and_install_boxes(installed_vagrant_boxes)
 
-    #user_settings dictates what and how vagrant will load various settings, so we need to ask the user for this data
+    # user_settings dictates what and how vagrant will load various settings, so we need to ask the user for this data
     user_settings = prompt_user_choices()
 
-    #write the settings to various configuration files,that vagrant/guest OS will read and run
+    # write the settings to various configuration files,that vagrant/guest OS will read and run
     write_settings(user_settings)
 
 
