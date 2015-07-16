@@ -483,7 +483,7 @@ def prompt_user_choices():
             print ("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_pmf_choice=None
 
-    print"\nPlease select if you would like to update PMF via SVN. Only select if you are sure your previous PMF choice is in sync with the local SVN repository."
+    print"\nPlease select if you would like to update PMF via SVN. Only select Yes if you are sure your previous PMF choice is in sync with the local SVN repository."
     for key in SVN_DECISION:
         print key, SVN_DECISION[key]
     while(m_user_svn_choice is None):
