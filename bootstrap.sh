@@ -217,7 +217,7 @@ if [[ $? -ne 0 ]] ; then
 fi
 
 
-if [[ "$pmfRel" == "807" ]]; then
+if [[ "$SVNUPDATE" == "True" ]]; then
     echo "======================================================================="
     echo "====================== Updating PMF to Trunk =========================="
     echo "======================================================================="
@@ -233,10 +233,10 @@ if [[ "$pmfRel" == "807" ]]; then
     svn co svn://pmfsvn/trunk/ibi/WebFOCUS /ibi/WebFOCUS$clientMajRel --force 1>/dev/null
     svn revert /ibi/WebFOCUS$clientMajRel -R
     svn revert /ibi/apps -R
-elif [[ "$pmfRel" == "806" ]]; then
+elif [[ "$SVNUPDATE" == "False" ]]; then
     echo "Update on SVN was not elected"
 else
-    echo "There is a problem with the PMF version selected. Please inspect the script and manually check for errors. Possibly in the bigport directory"
+    echo "There was a problem regarding SVNUPDATE. Please investigate further or try selecting no with regards to updating PMF via SVN."
     exit 1
 fi
 
