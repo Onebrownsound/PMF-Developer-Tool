@@ -47,8 +47,9 @@ DB_OPTIONS = {
     2: {"common_name": "PostgreSQL", "bash_key": 2, "wf_name": "sqlpstgr", "host": "localhost", "port": "5432",
         "id": "postgres", "password": "postgres"}
     }
-
+#List of options to diplay what pmf version to pick. Trunk is really an alias for whatever version of PMF is up on the local SVN.
 PMF_OPTIONS=['806','807']
+SVN_DECISION={1:"No",2:"Yes"}
 
 BASE_PMF_PROPERTIES_CONFIG = Template("""# Fri Feb 28 16:47:06 EST 2014
 # Replay feature output
@@ -130,6 +131,7 @@ end""")
 BASE_SHELL_SCRIPT = Template("""#!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
 DBCHOICE=${dbChoice}
+SVNUPDATE=${boolSVN}
 
 #Setup the start time
 STARTTIME=$(date +%s)
@@ -362,7 +364,7 @@ if [[ "$pmfRel" == "807" ]]; then
     svn revert /ibi/WebFOCUS$clientMajRel -R
     svn revert /ibi/apps -R
 elif [[ "$pmfRel" == "806" ]]; then
-    echo "The default installer for PMF 806 was used. To manually pull down from SVN SSH in using vagrant/vagrant in putty. And execute custom svn commands"
+    echo "Update on SVN was not elected"
 else
     echo "There is a problem with the PMF version selected. Please inspect the script and manually check for errors. Possibly in the bigport directory"
     exit 1
@@ -414,6 +416,7 @@ def prompt_user_choices():
     m_user_client_choice = None
     m_user_db_choice = None
     m_user_pmf_choice = None
+    m_user_svn_choice=None
 
     # Dynamically build a choice list for Operating System choices
     for i, j in enumerate(OPERATING_SYSTEMS, start=1):
@@ -480,11 +483,27 @@ def prompt_user_choices():
             print ("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_pmf_choice=None
 
+    print"\nPlease select if you would like to update PMF via SVN. Only select if you are sure your previous PMF choice is in sync with the local SVN repository."
+    for key in SVN_DECISION:
+        print key, SVN_DECISION[key]
+    while(m_user_svn_choice is None):
+        m_user_svn_choice=accept_only_integers()
+        try:
+            m_user_svn_choice=SVN_DECISION[m_user_svn_choice]
+            if m_user_svn_choice=="Yes":
+                m_user_svn_choice="True"
+            else:
+                m_user_svn_choice="False"
+        except:
+            print ("Sorry that is not an acceptable input please try again or exit the program.")
+            m_user_svn_choice=None
+
+
 
 
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
-    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice, m_user_pmf_choice)
+    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice, m_user_pmf_choice,m_user_svn_choice)
 
 
     # Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
@@ -492,7 +511,7 @@ def prompt_user_choices():
 
 def write_settings(m_user_settings):
     # important to remember m_user_db_choice is a copy of the inner hashtable of DB_OPTIONS..just a fyi
-    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice,m_user_pmf_choice = m_user_settings
+    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice,m_user_pmf_choice,m_user_svn_choice = m_user_settings
 
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -510,6 +529,7 @@ def write_settings(m_user_settings):
                                                       majorClient=m_user_majclient_choice,
                                                       minorClient=m_user_minclient_choice,
                                                       pmfVersion=m_user_pmf_choice,
+                                                      boolSVN=m_user_svn_choice,
                                                       dbChoice=m_user_db_choice["bash_key"]))
     except IOError:
         print "Error writing to file"
