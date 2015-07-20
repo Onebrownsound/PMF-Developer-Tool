@@ -125,12 +125,14 @@ BASE_VAGRANT_CONFIG = Template("""Vagrant.configure("2") do |config|
      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
      vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
      vb.customize ["modifyvm", :id, "--memory", "2048"]
+     vb.cpus = "4"
    end
 end""")
 
 BASE_SHELL_SCRIPT = Template("""#!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
 DBCHOICE=${dbChoice}
+#SVNUPDATE whether or not PMF will automatically update to TRUNK on SVN
 SVNUPDATE=${boolSVN}
 
 #Setup the start time
@@ -483,7 +485,7 @@ def prompt_user_choices():
             print ("Sorry that is not an acceptable input please try again or exit the program.")
             m_user_pmf_choice=None
 
-    print"\nPlease select if you would like to update PMF via SVN. Only select Yes if you are sure your previous PMF choice is in sync with the local SVN repository."
+    print"\nPlease select if you would like to update PMF via SVN.\n ***Only select Yes if you are sure your choice for PMF Version is currently in SVN as Trunk***\n."
     for key in SVN_DECISION:
         print key, SVN_DECISION[key]
     while(m_user_svn_choice is None):
@@ -588,6 +590,7 @@ def fetch_system_boxes():
 
 def explore_bigport():
     try:
+        #This is the path on the local IBI network that houses WF and PMF installers
         path = "//rediron1/u1/bigport/rels_development/"
         print "\n...Attempting to explore bigport..."
 
@@ -595,11 +598,20 @@ def explore_bigport():
         versions = os.listdir(path)
         # remove all possibilites that do not begin with 8 or 7 and are 3 or fewer characters AKA non-client versions
         # this works only for clients that fit the model 8XXX* or 7XXX* where X is a digit and * is a wildcard aka anything
-        versions = filter(lambda x: (x[0] == "8" or x[0] == "7") and len(x) > 3, versions)
+        wf_versions = filter(lambda x: (x[0] == "8" or x[0] == "7") and len(x) > 3, versions)
 
-        for index, item in enumerate(versions, start=1):
+        # this filter works by scanning for options that have 3 characters and begin wiht 8
+        # this aligns with the pmf naming convention of 80X
+        pmf_versions= filter (lambda x: (x[0]=="8") and len(x)==3,versions)
+
+        for item in pmf_versions:
+            if item not in PMF_OPTIONS:
+                print "Discovered new PMF option %s adding to PMF choice list." % item
+                PMF_OPTIONS.append(item)
+
+        for index, item in enumerate(wf_versions, start=1):
             DYNAMIC_CLIENT_OPTIONS[index] = item
-        print "Successfully explored bigport built client options."
+        print "Successfully explored bigport and built PMF & WF options."
     except:
         print "There was an error exploring bigport. Please check connections and ensure the drive is mounted and mapped to the letter Z."
 
