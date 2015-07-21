@@ -171,6 +171,9 @@ cp /vagrant/000-default /etc/apache2/sites-available/000-default.conf
 #Setup java permissions for ReportCaster and Derby to listen on ports 8200 & 1527
 echo 'grant {    permission java.net.SocketPermission "localhost:8200", "listen"; };' >> /etc/java-6-openjdk/security/java.policy
 echo 'grant {    permission java.net.SocketPermission "localhost:1527", "listen"; };' >> /etc/java-6-openjdk/security/java.policy
+echo 'grant codeBase "file:/ibi/apps/mainstreet/batik/-" { permission java.security.AllPermission; };' >> /etc/java-6-openjdk/security/java.policy
+echo 'grant codeBase "file:/ibi/apps/mainstreet/java/-" { permission java.security.AllPermission; };' >> /etc/java-6-openjdk/security/java.policy
+
 
 #Set the proper time zone for New York
 echo "================= Setting TimeZone ================"
