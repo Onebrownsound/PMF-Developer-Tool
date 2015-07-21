@@ -46,10 +46,10 @@ DB_OPTIONS = {
         "password": "root"},
     2: {"common_name": "PostgreSQL", "bash_key": 2, "wf_name": "sqlpstgr", "host": "localhost", "port": "5432",
         "id": "postgres", "password": "postgres"}
-    }
-#List of options to diplay what pmf version to pick. Trunk is really an alias for whatever version of PMF is up on the local SVN.
-PMF_OPTIONS=['806','807']
-SVN_DECISION={1:"No",2:"Yes"}
+}
+# List of options to diplay what pmf version to pick. Trunk is really an alias for whatever version of PMF is up on the local SVN.
+PMF_OPTIONS = ['806', '807']
+SVN_DECISION = {1: "No", 2: "Yes"}
 
 BASE_PMF_PROPERTIES_CONFIG = Template("""# Fri Feb 28 16:47:06 EST 2014
 # Replay feature output
@@ -408,6 +408,23 @@ def accept_only_integers():
     return prompt
 
 
+# function responsible for actually displaying the information and the particular choice
+# not used at the moment, can be utilized to possibly make display simple choices
+def simple_display_and_return_choice(option_name, option_data):
+    m_user_choice = None
+    print 'Please select: %s' % option_name
+    for key in option_data:
+        print key, option_data[key]
+    while (m_user_choice is None):
+        m_user_integer_choice = accept_only_integers()
+        try:
+            m_user_choice = option_data[m_user_integer_choice]
+        except:
+            print("Sorry that is not an acceptable input please try again or exit the program.")
+            m_user_choice = None
+    return option_data[m_user_integer_choice]
+
+
 # function responsible for prompting user for OS Choice
 def prompt_user_choices():
     # function is sort of ugly, and does repeat itself, however each case is intricate and has certain nuances specific tied to it's purpose
@@ -418,7 +435,7 @@ def prompt_user_choices():
     m_user_client_choice = None
     m_user_db_choice = None
     m_user_pmf_choice = None
-    m_user_svn_choice=None
+    m_user_svn_choice = None
 
     # Dynamically build a choice list for Operating System choices
     for i, j in enumerate(OPERATING_SYSTEMS, start=1):
@@ -475,37 +492,38 @@ def prompt_user_choices():
             m_user_db_choice = None
 
     print "\nPlease select a PMF Version:\n"
-    for index,key in enumerate(PMF_OPTIONS, start=1):
-        print index,key
+    for index, key in enumerate(PMF_OPTIONS, start=1):
+        print index, key
     while (m_user_pmf_choice is None):
-        m_user_pmf_choice=accept_only_integers()
+        m_user_pmf_choice = accept_only_integers()
         try:
-            m_user_pmf_choice=PMF_OPTIONS[m_user_pmf_choice-1]
+            m_user_pmf_choice = PMF_OPTIONS[m_user_pmf_choice - 1]
         except:
             print ("Sorry that is not an acceptable input please try again or exit the program.")
-            m_user_pmf_choice=None
+            m_user_pmf_choice = None
 
     print"\nPlease select if you would like to update PMF via SVN.\n ***Only select Yes if you are sure your choice for PMF Version is currently in SVN as Trunk***\n."
     for key in SVN_DECISION:
         print key, SVN_DECISION[key]
-    while(m_user_svn_choice is None):
-        m_user_svn_choice=accept_only_integers()
+    while (m_user_svn_choice is None):
+        m_user_svn_choice = accept_only_integers()
         try:
-            m_user_svn_choice=SVN_DECISION[m_user_svn_choice]
-            if m_user_svn_choice=="Yes":
-                m_user_svn_choice="True"
+            m_user_svn_choice = SVN_DECISION[m_user_svn_choice]
+            if m_user_svn_choice == "Yes":
+                m_user_svn_choice = "True"
             else:
-                m_user_svn_choice="False"
+                m_user_svn_choice = "False"
         except:
             print ("Sorry that is not an acceptable input please try again or exit the program.")
-            m_user_svn_choice=None
+            m_user_svn_choice = None
 
 
 
 
     # mUserOsChoice is a string which represents the users choice for operating system
     # is case sensitive and be aware for underscores
-    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice, m_user_pmf_choice,m_user_svn_choice)
+    return (m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice,
+            m_user_pmf_choice, m_user_svn_choice)
 
 
     # Opens the Vagrantfile in the directory and writes the specifief options to the file and saves it
@@ -513,7 +531,7 @@ def prompt_user_choices():
 
 def write_settings(m_user_settings):
     # important to remember m_user_db_choice is a copy of the inner hashtable of DB_OPTIONS..just a fyi
-    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice,m_user_pmf_choice,m_user_svn_choice = m_user_settings
+    m_user_os_choice, m_user_server_choice, m_user_majclient_choice, m_user_minclient_choice, m_user_db_choice, m_user_pmf_choice, m_user_svn_choice = m_user_settings
 
     print ("...Writing Vagrant Configurations To File...")
     # The next line will open the Vagrant configuration as a file object known as f
@@ -550,7 +568,7 @@ def write_settings(m_user_settings):
     print("pmf.properties succesfully written")
 
     print(
-    "\n...Configuration Files Succesfully Written...\nTo proceed enter the command 'vagrant up' into the command line")
+        "\n...Configuration Files Succesfully Written...\nTo proceed enter the command 'vagrant up' into the command line")
 
 
 def query_and_install_boxes(m_currently_installed_boxes):
@@ -590,7 +608,7 @@ def fetch_system_boxes():
 
 def explore_bigport():
     try:
-        #This is the path on the local IBI network that houses WF and PMF installers
+        # This is the path on the local IBI network that houses WF and PMF installers
         path = "//rediron1/u1/bigport/rels_development/"
         print "\n...Attempting to explore bigport..."
 
@@ -602,7 +620,7 @@ def explore_bigport():
 
         # this filter works by scanning for options that have 3 characters and begin wiht 8
         # this aligns with the pmf naming convention of 80X
-        pmf_versions= filter (lambda x: (x[0]=="8") and len(x)==3,versions)
+        pmf_versions = filter(lambda x: (x[0] == "8") and len(x) == 3, versions)
 
         for item in pmf_versions:
             if item not in PMF_OPTIONS:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
-DBCHOICE=1
+DBCHOICE=2
 #SVNUPDATE whether or not PMF will automatically update to TRUNK on SVN
 SVNUPDATE=False
 
@@ -65,7 +65,7 @@ mkdir /installs
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
 serverMajRel=81
 clientMajRel=81
-clientMinRel=04
+clientMinRel=05
 pmfRel=807
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
