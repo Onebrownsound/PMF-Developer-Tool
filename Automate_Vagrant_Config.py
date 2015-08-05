@@ -45,7 +45,9 @@ DB_OPTIONS = {
     1: {"common_name": "MySQL", "bash_key": 1, "wf_name": "SQLMYSQL", "host": "localhost", "port": "3306", "id": "root",
         "password": "root"},
     2: {"common_name": "PostgreSQL", "bash_key": 2, "wf_name": "sqlpstgr", "host": "localhost", "port": "5432",
-        "id": "postgres", "password": "postgres"}
+        "id": "postgres", "password": "postgres"},
+    3:{"common_name": "Oracle", "bash_key": 3, "wf_name": "SQLORA", "host": "localhost", "port": "49161",
+        "id": "system", "password": "oracle"}
 }
 # List of options to diplay what pmf version to pick. Trunk is really an alias for whatever version of PMF is up on the local SVN.
 PMF_OPTIONS = ['806', '807']

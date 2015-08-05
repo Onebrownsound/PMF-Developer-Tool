@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
-DBCHOICE=2
+DBCHOICE=1
 #SVNUPDATE whether or not PMF will automatically update to TRUNK on SVN
-SVNUPDATE=False
+SVNUPDATE=True
 
 #Setup the start time
 STARTTIME=$(date +%s)
@@ -13,7 +13,7 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 #Update the packages and install the required ones
 sudo apt-get update
 sudo apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql postgresql-contrib
-
+exit
 if [[ "$DBCHOICE" == "1" ]]; then
     #Create the WF Repository database in MySQL
     mysql -u root -proot -e "create database WebFOCUS8"
@@ -40,6 +40,9 @@ cp /vagrant/000-default /etc/apache2/sites-available/000-default.conf
 #Setup java permissions for ReportCaster and Derby to listen on ports 8200 & 1527
 echo 'grant {    permission java.net.SocketPermission "localhost:8200", "listen"; };' >> /etc/java-6-openjdk/security/java.policy
 echo 'grant {    permission java.net.SocketPermission "localhost:1527", "listen"; };' >> /etc/java-6-openjdk/security/java.policy
+echo 'grant codeBase "file:/ibi/apps/mainstreet/batik/-" { permission java.security.AllPermission; };' >> /etc/java-6-openjdk/security/java.policy
+echo 'grant codeBase "file:/ibi/apps/mainstreet/java/-" { permission java.security.AllPermission; };' >> /etc/java-6-openjdk/security/java.policy
+
 
 #Set the proper time zone for New York
 echo "================= Setting TimeZone ================"
