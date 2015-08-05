@@ -46,7 +46,7 @@ DB_OPTIONS = {
         "password": "root"},
     2: {"common_name": "PostgreSQL", "bash_key": 2, "wf_name": "sqlpstgr", "host": "localhost", "port": "5432",
         "id": "postgres", "password": "postgres"},
-    3:{"common_name": "Oracle", "bash_key": 3, "wf_name": "SQLORA", "host": "localhost", "port": "49161",
+    3: {"common_name": "Oracle", "bash_key": 3, "wf_name": "SQLORA", "host": "localhost", "port": "49161",
         "id": "system", "password": "oracle"}
 }
 # List of options to diplay what pmf version to pick. Trunk is really an alias for whatever version of PMF is up on the local SVN.
@@ -122,6 +122,7 @@ CONTINUE_ON_EXISTING_PMF=N
 BASE_VAGRANT_CONFIG = Template("""Vagrant.configure("2") do |config|
   config.vm.box = "${operating_system}"
   config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provision :shell, path: "oracle.sh"
   config.vm.network "public_network", use_dhcp_assigned_default_route:true
    config.vm.provider :virtualbox do |vb|
      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
@@ -155,6 +156,32 @@ elif [[ "$DBCHOICE" == "2" ]]; then
     sudo -u postgres psql -c "ALTER USER postgres with password 'postgres';"
     #Create the WF Repository database in POSTGRESQL
     sudo -u postgres createdb WebFOCUS8
+elif [[ "$DBCHOICE" == "3" ]]; then
+  #Make Swap file since oracle client requires a somewhat large swap space, set it to 4GB
+  sudo fallocate -l 4G /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  sudo echo '/swapfile   none    swap    sw    0   0' >> /etc/fstab
+
+  #ORACLE CLIENT INSTALLATION REMEMBER oracle path is hardcoded to opt/oracle/instantclient_11_2
+  sudo apt-get install -y unzip libaio1
+  sudo mkdir /opt
+  sudo mkdir /opt/oracle
+  sudo mkdir /opt/oracle/network
+  sudo mkdir /opt/oracle/network/admin
+  cd /opt/oracle
+  sudo unzip /vagrant/instantclient-basic-linux.x64-11.2.0.4.0.zip
+  sudo unzip /vagrant/instantclient-sdk-linux.x64-11.2.0.4.0.zip
+  sudo unzip /vagrant/instantclient-sqlplus-linux.x64-11.2.0.4.0.zip
+  echo export ORACLE_HOME=/opt/oracle >> /etc/profile
+  echo export LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2 >> /etc/profile
+  echo export PATH=$PATH:/opt/oracle/instantclient_11_2 >> /etc/profile
+
+  #DOCKER Oracle Experimentation
+  sudo apt-get install -y docker.io
+  sudo docker pull wnameless/oracle-xe-11g
+  sudo docker run -d -p 49160:22 -p 49161:1521 wnameless/oracle-xe-11g
 else
     echo "There was a problem setting up database credentials check the source script"
     exit 1
@@ -255,7 +282,19 @@ elif [[ "$DBCHOICE" == "2" ]]; then
    #Create Postgresql adapter and configure for classpath
    sed -i 's/\[Adapters\]/\[Adapters\]\\npstgr_jdbdrv = org.postgresql.Driver\\npstgr_access = y\\npstgr_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
    sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/postgresql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+elif [[ "$DBCHOICE" == "3" ]]; then
+  #Create OracleSQL adapter and configure for classpath
+  sed -i 's/\[Adapters\]/\[Adapters\]\nora_access = y\nora_rel = 11\nora_oci = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+  sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/ojdbc6.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+  #Experimental Oracle stuff
+  echo export 'ORACLE_HOME=/opt/oracle' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'PATH=$PATH:/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'TNS_NAME=/opt/oracle/network/admin' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 
+  echo export 'ORACLE_SID=xe' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'NLS_LANG=AMERICAN' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'ORA_NCHAR_LITERAL_REPLACE=TRUE' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 else
     echo "There was a problem changing JDBC adapter"
     exit 1
