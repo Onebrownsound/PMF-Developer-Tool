@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
-DBCHOICE=1
+DBCHOICE=3
 #SVNUPDATE whether or not PMF will automatically update to TRUNK on SVN
-SVNUPDATE=True
+SVNUPDATE=False
 
 #Setup the start time
 STARTTIME=$(date +%s)
@@ -13,7 +13,7 @@ sudo debconf-set-selections <<< 'mysql-server-5.5 mysql-server/root_password_aga
 #Update the packages and install the required ones
 sudo apt-get update
 sudo apt-get install -y tomcat7 tomcat7-admin vim mysql-server-5.5 apache2 libapache2-mod-jk openjdk-6-jre openjdk-6-jdk libc6 ksh rpm subversion libmysql-java libpostgresql-jdbc-java postgresql postgresql-contrib
-exit
+
 if [[ "$DBCHOICE" == "1" ]]; then
     #Create the WF Repository database in MySQL
     mysql -u root -proot -e "create database WebFOCUS8"
@@ -22,6 +22,32 @@ elif [[ "$DBCHOICE" == "2" ]]; then
     sudo -u postgres psql -c "ALTER USER postgres with password 'postgres';"
     #Create the WF Repository database in POSTGRESQL
     sudo -u postgres createdb WebFOCUS8
+elif [[ "$DBCHOICE" == "3" ]]; then
+  #Make Swap file since oracle client requires a somewhat large swap space, set it to 4GB
+  sudo fallocate -l 4G /swapfile
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  sudo echo '/swapfile   none    swap    sw    0   0' >> /etc/fstab
+
+  #ORACLE CLIENT INSTALLATION REMEMBER oracle path is hardcoded to opt/oracle/instantclient_11_2
+  sudo apt-get install -y unzip libaio1
+  sudo mkdir /opt
+  sudo mkdir /opt/oracle
+  sudo mkdir /opt/oracle/network
+  sudo mkdir /opt/oracle/network/admin
+  cd /opt/oracle
+  sudo unzip /vagrant/instantclient-basic-linux.x64-11.2.0.4.0.zip
+  sudo unzip /vagrant/instantclient-sdk-linux.x64-11.2.0.4.0.zip
+  sudo unzip /vagrant/instantclient-sqlplus-linux.x64-11.2.0.4.0.zip
+  echo export ORACLE_HOME=/opt/oracle >> /etc/profile
+  echo export LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2 >> /etc/profile
+  echo export PATH=$PATH:/opt/oracle/instantclient_11_2 >> /etc/profile
+
+  #DOCKER Oracle Experimentation
+  sudo apt-get install -y docker.io
+  sudo docker pull wnameless/oracle-xe-11g
+  sudo docker run -d -p 49160:22 -p 49161:1521 wnameless/oracle-xe-11g
 else
     echo "There was a problem setting up database credentials check the source script"
     exit 1
@@ -67,8 +93,8 @@ mkdir /installs
 
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
 serverMajRel=81
-clientMajRel=81
-clientMinRel=05
+clientMajRel=80
+clientMinRel=10
 pmfRel=807
 #Where on Bigport?  rels_development or rels_production
 relsLoc=rels_development
@@ -95,6 +121,17 @@ fi
 
 #Modify EDASTART to add Global variables to disable EDA security and set JDK_HOME
 head -n 1 /ibi/srv$serverMajRel/wfs/bin/edastart > /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+if [[ "$DBCHOICE" == "3" ]]; then
+  #Experimental Oracle stuff
+  echo export 'ORACLE_HOME=/opt/oracle' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'PATH=$PATH:/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'TNS_NAME=/opt/oracle/network/admin' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+
+  echo export 'ORACLE_SID=xe' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'NLS_LANG=AMERICAN' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'ORA_NCHAR_LITERAL_REPLACE=TRUE' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+fi
 echo export EDAEXTSEC=OFF >>/ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 echo export JDK_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >>/ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 tail -n +2 /ibi/srv$serverMajRel/wfs/bin/edastart >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
@@ -122,6 +159,10 @@ elif [[ "$DBCHOICE" == "2" ]]; then
    #Create Postgresql adapter and configure for classpath
    sed -i 's/\[Adapters\]/\[Adapters\]\npstgr_jdbdrv = org.postgresql.Driver\npstgr_access = y\npstgr_jdbc = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
    sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/postgresql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
+elif [[ "$DBCHOICE" == "3" ]]; then
+  #Create OracleSQL adapter and configure for classpath
+  sed -i 's/\[Adapters\]/\[Adapters\]\nora_access = y\nora_rel = 11\nora_oci = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+  sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/ojdbc6.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
 
 else
     echo "There was a problem changing JDBC adapter"
@@ -211,14 +252,6 @@ cd /installs
 chmod 777 pmf-install.bin
 # Run the silent install
 ./pmf-install.bin -i silent -f /installs/pmf.properties
-if [[ $? -ne 0 ]] ; then
-   echo "======================================================================="
-   echo "======================================================================="
-   echo "Something went wrong in PMF install"
-   echo "======================================================================="
-   echo "======================================================================="
-   exit 1
-fi
 
 
 if [[ "$SVNUPDATE" == "True" ]]; then

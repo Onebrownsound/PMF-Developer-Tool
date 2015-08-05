@@ -255,6 +255,17 @@ fi
 
 #Modify EDASTART to add Global variables to disable EDA security and set JDK_HOME
 head -n 1 /ibi/srv$serverMajRel/wfs/bin/edastart > /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+if [[ "$DBCHOICE" == "3" ]]; then
+  #Experimental Oracle stuff
+  echo export 'ORACLE_HOME=/opt/oracle' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'PATH=$PATH:/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'TNS_NAME=/opt/oracle/network/admin' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+
+  echo export 'ORACLE_SID=xe' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'NLS_LANG=AMERICAN' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  echo export 'ORA_NCHAR_LITERAL_REPLACE=TRUE' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+fi
 echo export EDAEXTSEC=OFF >>/ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 echo export JDK_HOME=/usr/lib/jvm/java-6-openjdk-amd64 >>/ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 tail -n +2 /ibi/srv$serverMajRel/wfs/bin/edastart >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
@@ -284,17 +295,9 @@ elif [[ "$DBCHOICE" == "2" ]]; then
    sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/postgresql.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
 elif [[ "$DBCHOICE" == "3" ]]; then
   #Create OracleSQL adapter and configure for classpath
-  sed -i 's/\[Adapters\]/\[Adapters\]\nora_access = y\nora_rel = 11\nora_oci = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
-  sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/ojdbc6.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
-  #Experimental Oracle stuff
-  echo export 'ORACLE_HOME=/opt/oracle' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
-  echo export 'PATH=$PATH:/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
-  echo export 'TNS_NAME=/opt/oracle/network/admin' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
-  echo export 'LD_LIBRARY_PATH=/opt/oracle/instantclient_11_2' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
+  sed -i 's/\[Adapters\]/\[Adapters\]\\nora_access = y\\nora_rel = 11\\nora_oci = y/' /ibi/srv$serverMajRel/wfs/bin/edaserve.cfg
+  sed -i 's/CLASS = JAVASERVER/CLASS = JAVASERVER\\nIBI_CLASSPATH = \/var\/lib\/tomcat7\/shared\/ojdbc6.jar:\/var\/lib\/tomcat7\/shared\/derbyclient.jar/' /ibi/srv$serverMajRel/wfs/etc/odin.cfg
 
-  echo export 'ORACLE_SID=xe' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
-  echo export 'NLS_LANG=AMERICAN' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
-  echo export 'ORA_NCHAR_LITERAL_REPLACE=TRUE' >> /ibi/srv$serverMajRel/wfs/bin/edastart-tmp
 else
     echo "There was a problem changing JDBC adapter"
     exit 1
@@ -383,14 +386,6 @@ cd /installs
 chmod 777 pmf-install.bin
 # Run the silent install
 ./pmf-install.bin -i silent -f /installs/pmf.properties
-if [[ $? -ne 0 ]] ; then
-   echo "======================================================================="
-   echo "======================================================================="
-   echo "Something went wrong in PMF install"
-   echo "======================================================================="
-   echo "======================================================================="
-   exit 1
-fi
 
 
 if [[ "$SVNUPDATE" == "True" ]]; then
