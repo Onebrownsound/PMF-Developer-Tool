@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #DBCHOICE represents which db will be installed 1->Mysql 2->Postgresql
-DBCHOICE=3
+DBCHOICE=1
 #SVNUPDATE whether or not PMF will automatically update to TRUNK on SVN
 SVNUPDATE=False
 
@@ -92,7 +92,7 @@ mount -t nfs -o ro,intr,sync,soft,vers=2 lnxx64r6:/port/edaport/R729999D/tape/al
 mkdir /installs
 
 #Setup some variables.  These are used to prevent the need to make multiple change for a WF version change
-serverMajRel=81
+serverMajRel=80
 clientMajRel=80
 clientMinRel=10
 pmfRel=807

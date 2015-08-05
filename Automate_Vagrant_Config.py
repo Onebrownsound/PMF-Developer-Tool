@@ -53,6 +53,20 @@ DB_OPTIONS = {
 PMF_OPTIONS = ['806', '807']
 SVN_DECISION = {1: "No", 2: "Yes"}
 
+BASE_ORACLE_SHELL_SCRIPT="""#!/bin/bash
+
+echo "Formatting Oracle Server"
+cd /vagrant
+echo "exit" | sqlplus system/oracle@localhost:49161 @sqlora_env_defaults.sql
+echo "exit" | sqlplus system/oracle@localhost:49161 @sqlora.sql
+#EDIT PMF_BASE FOR ORACLE CONFIG
+
+head -n -1 /ibi/profiles/pmf_base.prf >> /ibi/profiles/pmf_basetemp.prf
+mv -f /ibi/profiles/pmf_basetemp.prf /ibi/profiles/pmf_base.prf
+echo "ENGINE SQLORA SET CONNECTION_ATTRIBUTES pmf_system 'localhost:49161'/system,oracle" >> /ibi/profiles/pmf_base.prf
+echo "ENGINE SQLORA SET CONNECTION_ATTRIBUTES pmf_cube 'localhost:49161'/system,oracle" >> /ibi/profiles/pmf_base.prf
+echo "ENGINE SQLORA SET CONNECTION_ATTRIBUTES pmf_load_test 'localhost:49161'/system,oracle" >> /ibi/profiles/pmf_base.prf"""
+
 BASE_PMF_PROPERTIES_CONFIG = Template("""# Fri Feb 28 16:47:06 EST 2014
 # Replay feature output
 # ---------------------
@@ -605,6 +619,15 @@ def write_settings(m_user_settings):
     except IOError:
         print"Error writing to file"
     print("pmf.properties succesfully written")
+
+    #In the event Oracle is the selected DB, write the special oracle.sh script to file else make it empty
+    if m_user_db_choice["common_name"]=="Oracle":
+        with open("oracle.sh","w+") as f:
+            f.write(BASE_ORACLE_SHELL_SCRIPT)
+    else:
+        with open("oracle.sh","w+") as f:
+            f.write('#!/bin/bash')
+
 
     print(
         "\n...Configuration Files Succesfully Written...\nTo proceed enter the command 'vagrant up' into the command line")
