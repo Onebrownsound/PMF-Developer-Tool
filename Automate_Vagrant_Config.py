@@ -678,7 +678,7 @@ def explore_bigport():
         versions = os.listdir(path)
         # remove all possibilites that do not begin with 8 or 7 and are 3 or fewer characters AKA non-client versions
         # this works only for clients that fit the model 8XXX* or 7XXX* where X is a digit and * is a wildcard aka anything
-        wf_versions = filter(lambda x: (x[0] == "8" or x[0] == "7") and len(x) > 3, versions)
+        wf_versions = filter(lambda x: (x[0] == "8" or x[0] == "7") and len(x) > 3 and sum(c.isdigit() for c in x)> 3, versions)
 
         # this filter works by scanning for options that have 3 characters and begin wiht 8
         # this aligns with the pmf naming convention of 80X
