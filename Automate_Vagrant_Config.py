@@ -53,6 +53,7 @@ DB_OPTIONS = {
 PMF_OPTIONS = ['806', '807']
 SVN_DECISION = {1: "No", 2: "Yes"}
 
+#Serves as template for secondary BASH provision script is only written to file if Oracle DB is selected as DB. Else file is erased.
 BASE_ORACLE_SHELL_SCRIPT="""#!/bin/bash
 
 echo "Formatting Oracle Server"
@@ -67,6 +68,7 @@ echo "ENGINE SQLORA SET CONNECTION_ATTRIBUTES pmf_system 'localhost:49161'/syste
 echo "ENGINE SQLORA SET CONNECTION_ATTRIBUTES pmf_cube 'localhost:49161'/system,oracle" >> /ibi/profiles/pmf_base.prf
 echo "ENGINE SQLORA SET CONNECTION_ATTRIBUTES pmf_load_test 'localhost:49161'/system,oracle" >> /ibi/profiles/pmf_base.prf"""
 
+#PMF Properties change according to DB type so this is the template object choices will be injected into.
 BASE_PMF_PROPERTIES_CONFIG = Template("""# Fri Feb 28 16:47:06 EST 2014
 # Replay feature output
 # ---------------------
@@ -693,7 +695,7 @@ def explore_bigport():
             DYNAMIC_CLIENT_OPTIONS[index] = item
         print "Successfully explored bigport and built PMF & WF options."
     except:
-        print "There was an error exploring bigport. Please check connections and ensure the drive is mounted and mapped to the letter Z."
+        print "There was an error exploring bigport. Please check connections and ensure you are connected to IBI Internal Network!"
 
 
 def main():

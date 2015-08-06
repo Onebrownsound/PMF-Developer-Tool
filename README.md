@@ -20,3 +20,7 @@ Vagrant lets you quickly spin up full environments for the purpose of PMF unit t
 **	 “X/Y” : { “name” : ” X/Y”, “description” : “insert description here”} 
 
 *4.	The script will now automatically query your system for currently installed vagrant boxes and install boxes that are absent.
+
+=Special Oracle DB Notes=
+*1. Oracle DB will only work with the version of PMF within /trunk on SVN. If you intend on using Oracle DB for testing purposes, ensure you are making non-conflicting choices when running the python script. 
+*2. Upon loading a successful instance , there is one manual step one must take to complete the process. PMF must be re synced, navigate to Manage > Check/Resync Mart within PMF. Then enter the following data respectively PMF, PMF_DATAMART_DATA, and PMF_DATAMART_INDEX. Clicking re sync should successfully re sync the database.

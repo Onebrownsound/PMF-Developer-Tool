@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Formatting Oracle Server"
-cd /vagrant
+cd /ibi/apps/pmfdbms/create_database
 echo "exit" | sqlplus system/oracle@localhost:49161 @sqlora_env_defaults.sql
 echo "exit" | sqlplus system/oracle@localhost:49161 @sqlora.sql
 #EDIT PMF_BASE FOR ORACLE CONFIG
